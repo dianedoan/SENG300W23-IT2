@@ -1,4 +1,4 @@
-package com.autovend.software;
+package com.autovend;
 
 import java.math.BigDecimal;
 import java.util.Scanner;
@@ -71,10 +71,6 @@ public class SelfCheckoutMachineLogic{
 	public boolean illInvalidEvent;
 	private SelfCheckoutStation station;
 	
-	private Map<Barcode, BarcodedProduct> barcodeProducts = ProductDatabases.BARCODED_PRODUCT_DATABASE;
-	private Map<Product, Integer> invProducts = ProductDatabases.INVENTORY;
-	private Map<PriceLookUpCode, PLUCodedProduct> pluProducts = ProductDatabases.PLU_PRODUCT_DATABASE;
-
 	private ArrayList<BarcodedUnit> scannedItems = new ArrayList<BarcodedUnit>();
 	private ArrayList<PriceLookUpCodedUnit> pluItems = new ArrayList<PriceLookUpCodedUnit>();
 	
@@ -188,8 +184,33 @@ public class SelfCheckoutMachineLogic{
 		return foundProduct;
 	}
 	
+	public static PLUCodedProduct getPLUProductFromPlu(PriceLookUpCode plu) {
+		PLUCodedProduct foundProduct = null;
+		
+		if(ProductDatabases.PLU_PRODUCT_DATABASE.containsKey(plu)) {
+			foundProduct = ProductDatabases.PLU_PRODUCT_DATABASE.get(plu);
+		};
+		return foundProduct;
+	}
+	
+	public static PriceLookUpCodedUnit getPLUUnitFromPLU(PriceLookUpCode plu, Double weight) {
+		PLUCodedProduct foundProduct = getPLUProductFromPlu(plu);
+		
+		PriceLookUpCodedUnit pluUnit = new PriceLookUpCodedUnit(plu, weight);
+		
+		return pluUnit;
+	}
+	
 
+	public static Integer getProductInventory(Product product) {
+		return ProductDatabases.INVENTORY.get(product);
+	}
 
+	public static void deductInventory (Product product, int amount) {
+		Integer current = ProductDatabases.INVENTORY.get(product);
+		ProductDatabases.INVENTORY.put(product, current-amount);
+	}
+	
 	/**
 	 * Tells the machine to wait until the customer chnages the weight of the scale
 	 */
@@ -398,24 +419,52 @@ public class SelfCheckoutMachineLogic{
 		
 	}
 	
-	public boolean addItemPLU(PriceLookUpCode plu, double weight) {
+	public boolean addItemPLU(PriceLookUpCode plu, Double weight) {
 		if (plu == null) {
 			throw new  NullPointerException("Weight cannot be null!");
 		}
-		if(this.pluProducts.contains(plu)) {
-			PLUCodedProduct product = this.pluProducts.get(plu);
-			if(this.invProducts.get(product) == 0) {
+		if(getPLUProductFromPlu(plu) != null) {
+			PLUCodedProduct product = getPLUProductFromPlu(plu);
+			if(getProductInventory(product) == 0) {
 				return false;
 			}
 			else {
-				this.invProducts.put(product, this.inventory.get(product)-1);
-				PriceLookUpCodedUnit pluItem = new PriceLookUpCodedUnit(plu, weight);
+				deductInventory(product, 1);
+				PriceLookUpCodedUnit pluItem = getPLUUnitFromPLU(plu, weight);
 				this.station.scale.add(pluItem);
 				BigDecimal price = product.getPrice() * weight;
 				this.total += price;
 				this.pluItems.add(pluItem);
 				return true;
 			}
+		}
+		else {
+			return false;
+		}
+	}
+	
+	public boolean addItemScan(Barcode barcode) {
+		if (barcode == null) {
+			throw new  NullPointerException("Weight cannot be null!");
+		}
+		
+		if(getBarcodedUnitFromBarcode(barcode) != null) {
+			BarcodedProduct product = getBarcodedProductFromBarcode(barcode);
+			if(getProductInventory(product) == 0) {
+				return false;
+			}
+			else {
+				deductInventory(product, 1);
+				BarcodedUnit barcodeItem = getBarcodedUnitFromBarcode(barcode);
+				this.station.mainScanner.scan(barcodeItem);
+				BigDecimal price = product.getPrice() * product.getExpectedWeight();
+				this.total += price;
+				this.scannedItems.add(barcodeItem);
+				return true;
+			}
+		}
+		else {
+			return false;
 		}
 	}
 }
