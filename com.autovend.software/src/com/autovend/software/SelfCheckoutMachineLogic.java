@@ -23,6 +23,7 @@ import com.autovend.products.Product;
 
 public class SelfCheckoutMachineLogic{
 	
+	private Product bag;
 	public BillSlot billSlot; // create bill slot
 	public BillDispenser dispenser; // create bill dispenser
 	public Bill bill; // create a bill
