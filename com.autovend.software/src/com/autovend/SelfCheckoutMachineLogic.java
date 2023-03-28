@@ -1,25 +1,29 @@
 package com.autovend.software;
 
 import java.math.BigDecimal;
-import java.util.Currency;
 import java.util.Scanner;
+import java.util.ArrayList;
 
-import com.autovend.Barcode;
-import com.autovend.BarcodedUnit;
-import com.autovend.SellableUnit;
-import com.autovend.devices.BarcodeScanner;
+import com.autovend.devices.BillDispenser;
 import com.autovend.devices.BillSlot;
 import com.autovend.devices.ElectronicScale;
 import com.autovend.devices.EmptyException;
 import com.autovend.devices.OverloadException;
-import com.autovend.devices.BillDispenser;
-import com.autovend.Bill;
-import com.autovend.software.BillSlotObserverStub;
-import com.autovend.software.BillValidatorObserverStub;
-import com.autovend.products.BarcodedProduct;
 import com.autovend.devices.SelfCheckoutStation;
 import com.autovend.external.ProductDatabases;
+import com.autovend.products.BarcodedProduct;
+import com.autovend.products.PLUCodedProduct;
 import com.autovend.products.Product;
+import com.autovend.software.AttendantIO;
+import com.autovend.software.BarcodeScannerObserverStub;
+import com.autovend.software.BillSlotObserverStub;
+import com.autovend.software.BillValidatorObserverStub;
+import com.autovend.software.CashIO;
+import com.autovend.software.CustomerDisplayIO;
+import com.autovend.software.CustomerIO;
+import com.autovend.software.ElectronicScaleObserverStub;
+import com.autovend.software.PrintReceipt;
+import com.autovend.software.TransactionReceipt;
 
 public class SelfCheckoutMachineLogic{
 	
@@ -65,6 +69,14 @@ public class SelfCheckoutMachineLogic{
 	public boolean billEjectedEvent;
 	public boolean billRemovedEvent;
 	public boolean illInvalidEvent;
+	private SelfCheckoutStation station;
+	
+	private Map<Barcode, BarcodedProduct> barcodeProducts = ProductDatabases.BARCODED_PRODUCT_DATABASE;
+	private Map<Product, Integer> invProducts = ProductDatabases.INVENTORY;
+	private Map<PriceLookUpCode, PLUCodedProduct> pluProducts = ProductDatabases.PLU_PRODUCT_DATABASE;
+
+	private ArrayList<BarcodedUnit> scannedItems = new ArrayList<BarcodedUnit>();
+	private ArrayList<PriceLookUpCodedUnit> pluItems = new ArrayList<PriceLookUpCodedUnit>();
 	
 	public int getReasonForLock() {
 		return reasonForLock;
@@ -96,7 +108,7 @@ public class SelfCheckoutMachineLogic{
 		for(int i = 0; i < this.numberOfLockCodes; i++) {
 			listOfLockCodes[i] = i-1;
 		}
-		
+		this.station = scStation;
 		scStation.baggingArea.register(esObserver);
 		scStation.baggingArea.disable();
 		scStation.baggingArea.enable();
@@ -384,5 +396,26 @@ public class SelfCheckoutMachineLogic{
 		CustomerDisplayIO.informCustomer("The operation is complete");
 		
 		
+	}
+	
+	public boolean addItemPLU(PriceLookUpCode plu, double weight) {
+		if (plu == null) {
+			throw new  NullPointerException("Weight cannot be null!");
+		}
+		if(this.pluProducts.contains(plu)) {
+			PLUCodedProduct product = this.pluProducts.get(plu);
+			if(this.invProducts.get(product) == 0) {
+				return false;
+			}
+			else {
+				this.invProducts.put(product, this.inventory.get(product)-1);
+				PriceLookUpCodedUnit pluItem = new PriceLookUpCodedUnit(plu, weight);
+				this.station.scale.add(pluItem);
+				BigDecimal price = product.getPrice() * weight;
+				this.total += price;
+				this.pluItems.add(pluItem);
+				return true;
+			}
+		}
 	}
 }
