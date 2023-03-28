@@ -1,20 +1,25 @@
 package com.autovend.software.test;
 
+import static org.junit.Assert.assertEquals;
+
 import java.math.BigDecimal;
 import java.util.Currency;
 
 import org.junit.Before;
 import org.junit.Test;
 
+import com.autovend.devices.OverloadException;
 import com.autovend.devices.SelfCheckoutStation;
 import com.autovend.products.Product;
 import com.autovend.software.SelfCheckoutMachineLogic;
+import com.autovend.software.TransactionReceipt;
 
 public class AddBagTest {
 
 	private SelfCheckoutMachineLogic machineLogic;
     private SelfCheckoutStation selfCheckoutStation;
     public Product Bag;
+    private TransactionReceipt transactionReceipt;
     
 
     @Before
@@ -40,10 +45,11 @@ public class AddBagTest {
     }
     
     @Test
-    public void testAddOwnBags_whenBagIsValid() {
-        Product bag = new Product(25, false);
-        assertTrue(machineLogic.addOwnBags(bag));
-        assertEquals(1, machineLogic.);
+    public void testAddOwnBags_whenBagIsValid() throws OverloadException {
+        Product bag = transactionReceipt.getProductAt(1);
+        machineLogic.addOwnBags();
+//        assertEquals(1, machineLogic.getNumberOfBags());
+        assertEquals(machineLogic.addOwnBags(), "Please add your own bags.");
     }
 
 	
