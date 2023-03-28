@@ -2,12 +2,14 @@ package com.autovend.software;
 
 import java.math.BigDecimal;
 import java.util.Currency;
+import java.util.Scanner;
 
 import com.autovend.Barcode;
 import com.autovend.BarcodedUnit;
 import com.autovend.SellableUnit;
 import com.autovend.devices.BarcodeScanner;
 import com.autovend.devices.BillSlot;
+import com.autovend.devices.ElectronicScale;
 import com.autovend.devices.EmptyException;
 import com.autovend.devices.OverloadException;
 import com.autovend.devices.BillDispenser;
@@ -314,7 +316,35 @@ public class SelfCheckoutMachineLogic{
 		this.currentBill = null; //Null the current bill since the customer's session is over
 		
 	}
-
-
-
+	
+	/* Use Case: Add Own Bags
+	 * Scenario:
+		1. Customer I/O: Signals that the customer wants to add their own bags.
+		2. System: Indicates that the customer should add their own bags now.
+		3. Customer I/O: Signals that the customer has finished adding their own bags.
+		4. Bagging Area: Signals to the System the weight change.
+		5. System: Blocks the self-checkout station from further customer actions.
+		6. System: Signals to the Attendant I/O the need to approve the added bags.
+		7. Attendant I/O: Signals approval of the added bags.
+		8. System: Unblocks the self-checkout station.
+		9. System: Signals to the Customer I/O that the customer may now continue.
+	 */
+		
+	public void addOwnBags() throws OverloadException {
+		boolean selfCheckOutBlocked = false;
+		if (!selfCheckOutBlocked) {
+			System.out.println("Please add your own bags.");
+			
+			Scanner input = new Scanner(System.in);
+			System.out.println("Have you added the bag(s)? (Y/N)");
+			String response = input.nextLine();
+			if (response.equalsIgnoreCase("Y")) {
+				ElectronicScale electronicScale = new ElectronicScale(100, 1);
+				double weightChange = electronicScale.getCurrentWeight();
+				if (weightChange > 0.0) {
+					selfCheckOutBlocked = true;
+				}
+			}
+		}
+	}
 }
