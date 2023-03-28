@@ -46,6 +46,7 @@ public class SelfCheckoutMachineLogic{
 	public CustomerDisplayIO customerDisplay = new CustomerDisplayIO(); //Creating a display where messages to customers can go
 	public CustomerIO customerIO = new CustomerIO(); // create customer i/o
 	public CashIO cashIO = new CashIO(); // create cash i/o
+	private Product bag;
 	
 	/**Codes for reasons the Machine is Locked
 	 * -1: No Reason
@@ -312,6 +313,16 @@ public class SelfCheckoutMachineLogic{
 		printReceipt.takeReceipt();
 		customerDisplay.informCustomer("Your session is complete. Thank you for shopping with us.");
 		this.currentBill = null; //Null the current bill since the customer's session is over
+		
+	}
+	
+	public void Purchase_bags(int number_bags) {
+		CustomerDisplayIO.informCustomer("You want to purchase"+Double.valueOf(number_bags)+"\n bags");
+		
+		addItemPerUnit(bag, number_bags);
+		weightChanged(number_bags);
+		CustomerDisplayIO.informCustomer("The operation is complete");
+		
 		
 	}
 

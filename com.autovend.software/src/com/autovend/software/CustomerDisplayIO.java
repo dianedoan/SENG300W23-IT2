@@ -1,5 +1,8 @@
 package com.autovend.software;
+import java.util.*;
+import com.autovend.devices
 
+import com.autovend.IllegalDigitException;
 /*
  * Simulates sending messages to the customer's display and keeping track of the most recent message.
  * Also simulates getting input from the customer
@@ -28,8 +31,27 @@ public class CustomerDisplayIO {
 		return mostRecentMessageToCustomer;
 	}
 	
-	public int getMembershipNumber() {
-		Scanner customer_input = new Scanner(System.)
+	/**
+	 * Allows user to enter their membership number
+	 * @return the number entered
+	 * @throws IllegalArgumentException if not a number entered.
+	 */
+	
+	public int getMembershipNumber() throws IllegalArgumentException{
+		try {
+		Scanner customer_input = new Scanner(System.in);
+		System.out.println("Please enter membership number:");
+		String mn = customer_input.nextLine();
+		if(mn.equals("cancel")) {
+			return 0;
+		}else {
+		int membershipNumber = Integer.parseInt(mn);
+		return membershipNumber;
+		}}catch(IllegalArgumentException e) {
+			System.out.println("Enter proper membership number.");
+		}
+
+		
 		
 	}
 	
