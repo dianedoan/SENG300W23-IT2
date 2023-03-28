@@ -317,32 +317,39 @@ public class SelfCheckoutMachineLogic{
 		
 	}
 	
-	/* Use Case: Add Own Bags
-	 * Scenario:
-		1. Customer I/O: Signals that the customer wants to add their own bags.
-		2. System: Indicates that the customer should add their own bags now.
-		3. Customer I/O: Signals that the customer has finished adding their own bags.
-		4. Bagging Area: Signals to the System the weight change.
-		5. System: Blocks the self-checkout station from further customer actions.
-		6. System: Signals to the Attendant I/O the need to approve the added bags.
-		7. Attendant I/O: Signals approval of the added bags.
-		8. System: Unblocks the self-checkout station.
-		9. System: Signals to the Customer I/O that the customer may now continue.
+	/** 
+	 * Use Case: Add Own Bags
+	 * Allows the customer to add their own bags to the bagging area without causing a weight discrepancy
+	 * 
+	 * @throws OverloadException: If the extra character would spill off the end of the line.
 	 */
 		
 	public void addOwnBags() throws OverloadException {
 		boolean selfCheckOutBlocked = false;
 		if (!selfCheckOutBlocked) {
+			// 1. Customer I/O: Signals that the customer wants to add their own bags.
 			System.out.println("Please add your own bags.");
 			
+			// 2. System: Indicates that the customer should add their own bags now.
 			Scanner input = new Scanner(System.in);
 			System.out.println("Have you added the bag(s)? (Y/N)");
 			String response = input.nextLine();
+			
+			// 3. Customer I/O: Signals that the customer has finished adding their own bags.
 			if (response.equalsIgnoreCase("Y")) {
+				// 4. Bagging Area: Signals to the System the weight change.
 				ElectronicScale electronicScale = new ElectronicScale(100, 1);
 				double weightChange = electronicScale.getCurrentWeight();
+				
 				if (weightChange > 0.0) {
+					// 5. System: Blocks the self-checkout station from further customer actions.
 					selfCheckOutBlocked = true;
+					setMachineLock(selfCheckOutBlocked);
+					
+					// 6. System: Signals to the Attendant I/O the need to approve the added bags.
+					AttendantIO callAttendant = new AttendantIO();
+					callAttendant.informAttendant("Need approval for adding own bags");
+					System.out.println("Waiting for attendant approval");
 				}
 			}
 		}
