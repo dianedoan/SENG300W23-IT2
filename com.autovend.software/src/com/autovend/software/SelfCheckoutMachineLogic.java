@@ -351,6 +351,26 @@ public class SelfCheckoutMachineLogic{
 					AttendantIO callAttendant = new AttendantIO();
 					callAttendant.informAttendant("Need approval for adding own bags");
 					System.out.println("Waiting for attendant approval");
+					
+					// 7. Attendant I/O: Signals approval of the added bags
+					Scanner attendantInput = new Scanner(System.in);
+					System.out.println("Approve customer bag? (Y/N)");
+					String attendantResponse = input.nextLine();
+					if (response.equalsIgnoreCase("Y")) {
+						// 8. System: Unblocks the self-checkout station.
+						selfCheckOutBlocked = false;
+						setMachineLock(selfCheckOutBlocked);
+						// 9. System: Signals to the Customer I/O that the customer may now continue.
+						System.out.println("You may continue with your checkout");
+					}
+					// Exception: The attendant does not want to approve the added bags
+					else if(response.equalsIgnoreCase("N")) {
+						System.out.println("Attendant did not approve the added bags. Please remove the items.");
+					}
+				}
+				// Exception: The System is not ready to note weight discrepancies
+				else {
+					System.out.println("Error: Weight not within acceptable range");
 				}
 			}
 		}
