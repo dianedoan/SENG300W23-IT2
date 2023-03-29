@@ -2,6 +2,8 @@ package com.autovend.software.test;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.util.Currency;
 
@@ -14,7 +16,7 @@ import com.autovend.products.Product;
 import com.autovend.software.SelfCheckoutMachineLogic;
 import com.autovend.software.TransactionReceipt;
 
-public class AddBagTest {
+	public class addBagTest {
 
 	private SelfCheckoutMachineLogic machineLogic;
     private SelfCheckoutStation selfCheckoutStation;
@@ -52,5 +54,23 @@ public class AddBagTest {
         assertEquals(machineLogic.addOwnBags(), "Please add your own bags.");
     }
 
+    @Test
+    public void myTest() throws OverloadException {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        PrintStream printStream = new PrintStream(outputStream);
+
+        // Replace System.out with a mocked PrintStream that writes to the ByteArrayOutputStream
+        PrintStream originalPrintStream = System.out;
+        System.setOut(printStream);
+
+        try {
+            machineLogic.addOwnBags();
+            String output = outputStream.toString().trim();
+
+            assertEquals("Please add your own bags.", output);
+        } finally {
+            System.setOut(originalPrintStream);
+        }
+    }
 	
 }

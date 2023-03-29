@@ -29,6 +29,7 @@ import com.autovend.software.TransactionReceipt;
 		
 		@Test
 		public void testPurchaseBag() {
+			transactionReceipt.addProduct(Bag);
 			int lengthBefore = transactionReceipt.getBillLength();
 			Product bag = transactionReceipt.getProductAt(1);
 			SelfCheckoutMachineLogic machineLogic = null;
