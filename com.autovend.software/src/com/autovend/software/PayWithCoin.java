@@ -27,8 +27,94 @@ import com.autovend.devices.observers.CoinStorageObserver;
 import com.autovend.devices.observers.CoinValidatorObserver;
 
 public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, CoinDispenserObserver, CoinStorageObserver, CoinTrayObserver{
-	private SelfCheckoutStation selfCheckoutStation = null
+	//private SelfCheckoutStation selfCheckoutStation = null
+	
+			// ArrayList keeping track of (the value of) the inserted coins
+			ArrayList<Integer> coinsList = new ArrayList<Integer>();
 			
+			private SelfCheckoutStation selfCheckoutStation;
+			private CoinSlot slot;
+			private CoinValidator validator;
+			private Coin coin;
+			private CoinDispenser dispenser;
+			private BigDecimal totalCoin; // create local variable total
+			private CustomerIO customerIO = new CustomerIO(); // create customer i/o
+			private AttendantIO attendant = new AttendantIO();
+			
+			
+			// Total amount of cash inserted
+			double coinCount = 0;
+			
+			double remainingAmount;
+			
+			boolean inputCoin = false;
+			
+//			inputCoin = selfCheckoutStation.billCoin.accept(bill);
+			
+			/*
+			 * Setter for total
+			 */
+			public void setTotalCoin(BigDecimal totalCoin) {
+				this.totalCoin = totalCoin;
+			}
+			
+
+			/*
+			 * Getter for total
+			 */
+			public BigDecimal getTotal(BigDecimal total) {
+				return this.totalCoin;
+			}
+
+			public PayWithCoin(SelfCheckoutStation selfCheckoutStation) throws DisabledException, OverloadException{
+				
+				 inputCoin = selfCheckoutStation.coinInput.accept(coin);
+				
+			}
+			
+			public void coinValidate(SelfCheckoutStation selfCheckoutStation) throws DisabledException{
+				
+				coin = new Coin(coin.getValue(), coin.getCurrency());
+				// The value of each bill that gets accepted (is valid) will be added to billsList
+				remainingAmount = totalCoin;
+				while(selfCheckoutStation.validator.accept(coin)) {
+					coinsList.add(coin.getValue());
+					for(Integer i : coinsList) {
+						// updating the total amount
+						coinCount = coinCount + i;
+						
+						// Reduce the remaining amount due by the value of the inserted cash
+						remainingAmount = remainingAmount - coinCount;
+						// signals to the customer I/O the updated amount due after the insertion of each banknote.
+						customerIO.setAmount(remainingAmount);
+
+					}
+					
+				}
+			}
+
+	
+//			public void coinValidate(selfCheckoutStation) throws DisabledException{
+//				
+//				coin = new Coin(coin.value, coin.currency);
+//				
+//				while(selfCheckoutStation.coinValidator.accept(coin)) {
+//					coinsList.add(coin.getValue());
+//					for(Integer i : coinsList) {
+//						// updating the total amount
+//						coinCount = coinCount + i;
+//						
+//						// Reduce the remaining amount due by the value of the inserted cash
+//						remainingAmount = order.getOrderTotal() - billCount;
+//						// signals to the customer I/O the updated amount due after the insertion of each banknote.
+//						customer.amountDue();
+//
+//					}
+//					
+//				}
+//			}
+	
+	
 			
 			private boolean coinsLoadedEvent = false;
 			private boolean coinInsertedEvent = false;
@@ -129,4 +215,16 @@ public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, Coi
 			public boolean coinsLoadedEvent() {
 				return this.coinsLoadedEvent;
 			}
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
 }
