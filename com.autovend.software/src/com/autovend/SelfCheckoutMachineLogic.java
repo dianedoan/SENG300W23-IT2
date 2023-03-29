@@ -1,25 +1,29 @@
-package com.autovend.software;
+package com.autovend;
 
 import java.math.BigDecimal;
-import java.util.Currency;
 import java.util.Scanner;
+import java.util.ArrayList;
 
-import com.autovend.Barcode;
-import com.autovend.BarcodedUnit;
-import com.autovend.SellableUnit;
-import com.autovend.devices.BarcodeScanner;
+import com.autovend.devices.BillDispenser;
 import com.autovend.devices.BillSlot;
 import com.autovend.devices.ElectronicScale;
 import com.autovend.devices.EmptyException;
 import com.autovend.devices.OverloadException;
-import com.autovend.devices.BillDispenser;
-import com.autovend.Bill;
-import com.autovend.software.BillSlotObserverStub;
-import com.autovend.software.BillValidatorObserverStub;
-import com.autovend.products.BarcodedProduct;
 import com.autovend.devices.SelfCheckoutStation;
 import com.autovend.external.ProductDatabases;
+import com.autovend.products.BarcodedProduct;
+import com.autovend.products.PLUCodedProduct;
 import com.autovend.products.Product;
+import com.autovend.software.AttendantIO;
+import com.autovend.software.BarcodeScannerObserverStub;
+import com.autovend.software.BillSlotObserverStub;
+import com.autovend.software.BillValidatorObserverStub;
+import com.autovend.software.CashIO;
+import com.autovend.software.CustomerDisplayIO;
+import com.autovend.software.CustomerIO;
+import com.autovend.software.ElectronicScaleObserverStub;
+import com.autovend.software.PrintReceipt;
+import com.autovend.software.TransactionReceipt;
 
 public class SelfCheckoutMachineLogic{
 	
@@ -33,6 +37,7 @@ public class SelfCheckoutMachineLogic{
 	public BigDecimal total; // create local variable total
 	public BigDecimal remainder; // create local variable remainder
 	public BigDecimal change; // create local variable change
+	public BigDecimal totalExpectedWeight;
 	public boolean billInsertedEvent = false;
 	public boolean billValidEvent = false;
 	
@@ -65,6 +70,10 @@ public class SelfCheckoutMachineLogic{
 	public boolean billEjectedEvent;
 	public boolean billRemovedEvent;
 	public boolean illInvalidEvent;
+	private SelfCheckoutStation station;
+	
+	private ArrayList<BarcodedUnit> scannedItems = new ArrayList<BarcodedUnit>();
+	private ArrayList<PriceLookUpCodedUnit> pluItems = new ArrayList<PriceLookUpCodedUnit>();
 	
 	public int getReasonForLock() {
 		return reasonForLock;
@@ -96,7 +105,7 @@ public class SelfCheckoutMachineLogic{
 		for(int i = 0; i < this.numberOfLockCodes; i++) {
 			listOfLockCodes[i] = i-1;
 		}
-		
+		this.station = scStation;
 		scStation.baggingArea.register(esObserver);
 		scStation.baggingArea.disable();
 		scStation.baggingArea.enable();
@@ -176,8 +185,53 @@ public class SelfCheckoutMachineLogic{
 		return foundProduct;
 	}
 	
+	/**
+	 * Takes a plu code and returns the product registered with that code in the database; used in later methods
+	 * @param plu
+	 * @return
+	 */
+	public static PLUCodedProduct getPLUProductFromPlu(PriceLookUpCode plu) {
+		PLUCodedProduct foundProduct = null;
+		
+		if(ProductDatabases.PLU_PRODUCT_DATABASE.containsKey(plu)) {
+			foundProduct = ProductDatabases.PLU_PRODUCT_DATABASE.get(plu);
+		};
+		return foundProduct;
+	}
+	
+	/**
+	 * Takes a plu code, finds the associated product from the database, and creates an associated item object
+	 * @param plu
+	 * @param weight
+	 * @return
+	 */
+	public static PriceLookUpCodedUnit getPLUUnitFromPLU(PriceLookUpCode plu, Double weight) {
+		PLUCodedProduct foundProduct = getPLUProductFromPlu(plu);
+		
+		PriceLookUpCodedUnit pluUnit = new PriceLookUpCodedUnit(plu, weight);
+		
+		return pluUnit;
+	}
+	
+	/**
+	 * A getter for the total number of a product is available in stock
+	 * @param product
+	 * @return
+	 */
+	public static Integer getProductInventory(Product product) {
+		return ProductDatabases.INVENTORY.get(product);
+	}
 
-
+	/**
+	 * A method that deducts the amount of a product in inventory by one after it has been purchased by the customer
+	 * @param product
+	 * @param amount
+	 */
+	public static void deductInventory (Product product, int amount) {
+		Integer current = ProductDatabases.INVENTORY.get(product);
+		ProductDatabases.INVENTORY.put(product, current-amount);
+	}
+	
 	/**
 	 * Tells the machine to wait until the customer chnages the weight of the scale
 	 */
@@ -384,5 +438,118 @@ public class SelfCheckoutMachineLogic{
 		CustomerDisplayIO.informCustomer("The operation is complete");
 		
 		
+	}
+	
+	/**
+	 * Allows customer to add an item using a price lookup instead of scanning
+	 * 
+	 * @param plu
+	 * @param weight
+	 * @return
+	 */
+	public boolean addItemPLU(PriceLookUpCode plu, Double weight) {
+		//A valid PLU code must be provided 
+		if (plu == null) {
+			throw new  NullPointerException("PLU cannot be null!");
+		}
+		//Checks if the plu provided actually correlates to a product in the database by calling the getPLUProductfromPLU method
+		if(getPLUProductFromPlu(plu) != null) {
+			//If it exists, it gets it from the database
+			PLUCodedProduct product = getPLUProductFromPlu(plu);
+			//Checks that the amount of that product in stock is not 0. If it is, method returns false. 
+			if(getProductInventory(product) == 0) {
+				return false;
+			}
+			else {
+				//If the amount of the product in stock is not 0, deducts 1 from the amount in stock (inventory) using the deductInventory method
+				deductInventory(product, 1);
+				//Creates an item object
+				PriceLookUpCodedUnit pluItem = getPLUUnitFromPLU(plu, weight);
+				//Adds that item to the scale
+				this.station.scale.add(pluItem);
+				//Gets the price (per unit weight) and multiplies it by the total weight of the product the customer purchased
+				BigDecimal price = product.getPrice() * weight;
+				//Adds that to the total price
+				this.total += price;
+				//Adds the item to Array list of purchased items by PLU (to be used for checking weight discrepancy)
+				this.pluItems.add(pluItem);
+				return true;
+			}
+		}
+		//If the plu provided doesn't correlate to any product in the database, method returns false
+		else {
+			return false;
+		}
+	}
+	
+	/**
+	 * 
+	 * Allows customer to add an item by scanning the barcode
+	 * 
+	 * @param barcode
+	 * @return
+	 */
+	public boolean addItemScan(Barcode barcode) {
+		//The product must have a valid barcode
+		if (barcode == null) {
+			throw new  NullPointerException("Barcode cannot be null!");
+		}
+		
+		//Checks if the barcode provided actually correlates to a product in the database by calling the getBarcodedProductfromBarcode method
+		if(getBarcodedUnitFromBarcode(barcode) != null) {
+			//If it exists, it gets it from the database
+			BarcodedProduct product = getBarcodedProductFromBarcode(barcode);
+			//Checks that the amount of that product in stock is not 0. If it is, method returns false.
+			if(getProductInventory(product) == 0) {
+				return false;
+			}
+			else {
+				//If the amount of the product in stock is not 0, deducts 1 from the amount in stock (inventory) using the deductInventory method
+				deductInventory(product, 1);
+				//Creates an item object
+				BarcodedUnit barcodeItem = getBarcodedUnitFromBarcode(barcode);
+				//Invokes the station's scanner
+				this.station.mainScanner.scan(barcodeItem);
+				//Gets the price (per unit weight) and multiplies it by the total expected weight of the product the customer purchased
+				BigDecimal price = product.getPrice() * product.getExpectedWeight();
+				//Adds that to the total price
+				this.total += price;
+				//Adds the item to Array list of purchased items by scanning (to be used for checking weight discrepancy)
+				this.scannedItems.add(barcodeItem);
+				return true;
+			}
+		}
+		//If the barcode provided doesn't correlate to any product in the database, method returns false
+		else {
+			return false;
+		}
+	}
+	
+	/**
+	 * A method that checks whether there's a weight discrepancy after items have been added to bagging area
+	 * @return
+	 */
+	public boolean weightDiscrepancy(){
+		//Loops through array list containing all scanned items and adds their expected weight to the total expected weight
+		for(int i = 0; i < this.scannedItems.size(); i++) {
+			this.totalExpectedWeight += this.scannedItems.get(i).getWeight();
+		}
+		
+		//Loops through array list containing all plu added items and adds their expected weight to the total expected weight
+		for(int i = 0; i < this.pluItems.size(); i++) {
+			this.totalExpectedWeight += this.pluItems.get(i).getWeight();
+		}
+		
+		//Gets the current weight on the station's bagging area
+		BigDecimal currentWeight = this.station.baggingArea.getCurrentWeight();
+		//total expected weight must match the total weight on bagging area
+		if(this.totalExpectedWeight != currentWeight) {
+			//If not, the attendant is notified, and the method returns true
+			AttendantIO callAttendant = new AttendantIO();
+			callAttendant.informAttendant("Weight Discrepancy Detected!");
+			return true;
+		}
+		//If they match, method returns false
+		return false;
 	}
 }
