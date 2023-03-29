@@ -38,8 +38,15 @@ public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, Coi
 			private Coin coin;
 			private CoinDispenser dispenser;
 			private BigDecimal totalCoin; // create local variable total
-			private CustomerIO customerIO = new CustomerIO(); // create customer i/o
-			private AttendantIO attendant = new AttendantIO();
+			
+			private CustomerIO customer;
+			private AttendantIO attendant;
+			private CashIO cash;
+			ReceiptPrinter printer;
+			
+			// Array of the number of each coin denomination to dispense for change
+			private int[] coinsChange = new int[5];
+			private CoinDispenser[] dispensers = new CoinDispenser[5];
 			
 			
 			// Total amount of cash inserted
@@ -49,35 +56,41 @@ public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, Coi
 			
 			boolean inputCoin = false;
 			
-//			inputCoin = selfCheckoutStation.billCoin.accept(bill);
-			
-			/*
-			 * Setter for total
-			 */
-			public void setTotalCoin(BigDecimal totalCoin) {
-				this.totalCoin = totalCoin;
-			}
-			
+//			
+//			/*
+//			 * Setter for total
+//			 */
+//			public void setTotalCoin(BigDecimal totalCoin) {
+//				this.totalCoin = totalCoin;
+//			}
+//			
+//
+//			/*
+//			 * Getter for total
+//			 */
+//			public BigDecimal getTotal(BigDecimal total) {
+//				return this.totalCoin;
+//			}
 
-			/*
-			 * Getter for total
-			 */
-			public BigDecimal getTotal(BigDecimal total) {
-				return this.totalCoin;
-			}
-
-			public PayWithCoin(SelfCheckoutStation selfCheckoutStation) throws DisabledException, OverloadException{
+			public PayWithCoin(SelfCheckoutStation selfCheckoutStation, CustomerIO customer) throws DisabledException, OverloadException{
 				
 				 inputCoin = selfCheckoutStation.coinInput.accept(coin);
+				 	
+				 	customer = new CustomerIO();
+				 	remainingAmount = this.customer.getAmount();
+					
+					attendant = new AttendantIO();
+					cash = new CashIO();
+					//selfCheckoutStation = sc;
 				
 			}
 			
-			public void coinValidate(SelfCheckoutStation selfCheckoutStation) throws DisabledException{
+			public void coinValidate(SelfCheckoutStation selfCheckoutStation, CustomerIO customer) throws DisabledException{
 				
 				coin = new Coin(coin.getValue(), coin.getCurrency());
-				// The value of each bill that gets accepted (is valid) will be added to billsList
+				// The value of each coin that gets accepted (is valid) will be added to coinsList
 				remainingAmount = totalCoin;
-				while(selfCheckoutStation.validator.accept(coin)) {
+				while(selfCheckoutStation.billValidator.accept(coin)) {
 					coinsList.add(coin.getValue());
 					for(Integer i : coinsList) {
 						// updating the total amount
@@ -85,34 +98,13 @@ public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, Coi
 						
 						// Reduce the remaining amount due by the value of the inserted cash
 						remainingAmount = remainingAmount - coinCount;
-						// signals to the customer I/O the updated amount due after the insertion of each banknote.
-						customerIO.setAmount(remainingAmount);
+						// signals to the customer I/O the updated amount due after the insertion of each coin.
+						customer.setAmount(remainingAmount);
 
 					}
 					
 				}
 			}
-
-	
-//			public void coinValidate(selfCheckoutStation) throws DisabledException{
-//				
-//				coin = new Coin(coin.value, coin.currency);
-//				
-//				while(selfCheckoutStation.coinValidator.accept(coin)) {
-//					coinsList.add(coin.getValue());
-//					for(Integer i : coinsList) {
-//						// updating the total amount
-//						coinCount = coinCount + i;
-//						
-//						// Reduce the remaining amount due by the value of the inserted cash
-//						remainingAmount = order.getOrderTotal() - billCount;
-//						// signals to the customer I/O the updated amount due after the insertion of each banknote.
-//						customer.amountDue();
-//
-//					}
-//					
-//				}
-//			}
 	
 	
 			
