@@ -4,26 +4,31 @@ import com.autovend.devices.EmptyException;
 import com.autovend.devices.OverloadException;
 import com.autovend.devices.SelfCheckoutStation;
 import com.autovend.products.BarcodedProduct;
+import com.autovend.devices.ReceiptPrinter;
 
 
 /*
  * Controls the logic of the receipt printer.
  */
-public class PrintReceipt{
+public class PrintReceipt extends ReceiptPrinter {
 	
 	private SelfCheckoutStation scs;
 	private SelfCheckoutMachineLogic machineLogic;
-	private AttendantIO attendant;
 	private ReceiptPrinterObserverStub observerStub;
+
+	int maxInk = ReceiptPrinter.MAXIMUM_INK;
+	int maxPaper = ReceiptPrinter.MAXIMUM_PAPER;
+	
+	int inkThreshold = (int) (0.1 * ReceiptPrinter.MAXIMUM_INK);
+	int paperThreshold = (int) (0.1 * ReceiptPrinter.MAXIMUM_PAPER);
+	
 	
 	public PrintReceipt(SelfCheckoutStation selfcheckoutstation, SelfCheckoutMachineLogic machineLogic, AttendantIO attendant) {
 		this.scs = selfcheckoutstation;
 		this.machineLogic = machineLogic;
-		this.attendant = attendant;
-		
 		observerStub = new ReceiptPrinterObserverStub(attendant);
-		scs.printer.register(observerStub); //Registering stub as a listener for the receipt printer in the scs
-		
+		scs.printer.register(observerStub);
+				
 	}
 	
 	
@@ -49,12 +54,15 @@ public class PrintReceipt{
 					machineLogic.setReasonForLock(2);
 					return;
 				}
-
+				isLowInk();		//checks if the printer is low on ink
+				
 			}
 			
 			scs.printer.print(' '); //space
 			
-			scs.printer.print('$'); //$ to go before printing the price
+			scs.printer.print('$');//$ to go before printing the price
+			isLowInk(); //checks if the printer is low on ink
+			
 			if (observerStub.getOutOfInk()) { //If the printer is out of ink after printing a char, abort printing the receipt
 				machineLogic.setMachineLock(true);
 				machineLogic.setReasonForLock(2);
@@ -70,10 +78,12 @@ public class PrintReceipt{
 					machineLogic.setReasonForLock(2);
 					return;
 				}
-
+				
+				isLowInk(); //checks if the printer is low on ink
 			}
 			
-			scs.printer.print('\n'); //Newline before printing the next product
+			scs.printer.print('\n');//Newline before printing the next product
+			isLowPaper(); //checks if the printer is low on paper
 			if (observerStub.getOutOfPaper()) { //If the printer is out of paper after a new line, abort printing
 				machineLogic.setMachineLock(true);
 				machineLogic.setReasonForLock(2);
@@ -92,6 +102,7 @@ public class PrintReceipt{
 				machineLogic.setReasonForLock(2);
 				return;
 			}
+			isLowInk(); //checks if the printer is low on ink
 		}
 		
 		char[] totalPrice = machineLogic.total.toString().toCharArray();
@@ -103,6 +114,7 @@ public class PrintReceipt{
 				return;
 			}
 		}
+		isLowInk(); //checks if the printer is low on ink
 		
 	}
 	
@@ -114,6 +126,32 @@ public class PrintReceipt{
 		scs.printer.cutPaper(); //Cut the receipt from the receipt printer
 		String receipt = scs.printer.removeReceipt(); //Simulate a customer removing and taking their receipt
 		return receipt;
+	}
+	
+	//This method cheeks if the paper is low using a threshold value (10 percent)
+	public boolean isLowPaper() {
+	    int currentPaper = ReceiptPrinter.MAXIMUM_PAPER - maxPaper;
+	    boolean isLowPaper = currentPaper <= paperThreshold;
+	    if (isLowPaper) {
+	        observerStub.reactToLowPaperEvent(this);
+	    }
+	   
+        maxPaper--; //decrements max paper each time it is checked
+	    
+	    return isLowPaper;
+	}
+	
+	//This method cheeks if the paper is low using a threshold value (10 percent)
+	public boolean isLowInk() {
+	    int currentInk = ReceiptPrinter.MAXIMUM_INK - maxInk;
+	    boolean isLowInk = currentInk <= inkThreshold;
+	    if (isLowInk) {
+	        observerStub.reactToLowInkEvent(this);
+	    }
+	    
+	    maxInk--;   //decrements max ink each time it is checked
+	    
+	    return isLowInk;
 	}
 	
 	/**

@@ -8,10 +8,12 @@ import com.autovend.devices.observers.ReceiptPrinterObserver;
 /*
  * Stub class that implements the ReceiptPrinterObserver
  */
-public class ReceiptPrinterObserverStub implements ReceiptPrinterObserver{
+public class ReceiptPrinterObserverStub implements ReceiptPrinterObserver, LowInkPaperReceiptPrinterObserverStub {
 	
 	private boolean outOfPaper = false;
 	private boolean outOfInk = false;
+	private boolean lowOnPaper = false;
+	private boolean lowOnInk = false;
 	private AttendantIO attendant;
 	
 	public ReceiptPrinterObserverStub (AttendantIO attendant) {
@@ -73,6 +75,40 @@ public class ReceiptPrinterObserverStub implements ReceiptPrinterObserver{
 	 */
 	public boolean getOutOfInk() {
 		return outOfInk;
+	}
+
+	// If low paper event occurs, notifies attendant
+	@Override
+	public void reactToLowPaperEvent(ReceiptPrinter printer) {
+		attendant.informAttendant("Paper low in printer. Replace printer paper soon.");
+		lowOnPaper = true;
+	}
+	
+	
+	// If low ink event occurs, notifies attendant
+	@Override
+	public void reactToLowInkEvent(ReceiptPrinter printer) {
+		attendant.informAttendant("Ink low in printer. Replace printer ink soon.");
+		lowOnInk = true;
+		
+	}
+	
+	/**
+	 * Return value of outOfPaper boolean.
+	 * 
+	 * @return: Boolean of if the printer is out of paper or not.
+	 */
+	public boolean getLowPaper() {
+		return lowOnPaper;
+	}
+	
+	/**
+	 * Return value of outOfInk boolean.
+	 * 
+	 * @return: Boolean of if the printer is out of ink or not.
+	 */
+	public boolean getLowInk() {
+		return lowOnInk;
 	}
 
 }
