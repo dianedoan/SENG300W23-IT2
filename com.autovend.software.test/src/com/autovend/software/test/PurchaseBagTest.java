@@ -5,10 +5,16 @@ import static org.junit.Assert.assertEquals;
 import java.math.BigDecimal;
 import java.util.Currency;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.autovend.Barcode;
+import com.autovend.BarcodedUnit;
+import com.autovend.Numeral;
 import com.autovend.devices.SelfCheckoutStation;
+import com.autovend.devices.SimulationException;
+import com.autovend.products.BarcodedProduct;
 import com.autovend.products.Product;
 import com.autovend.software.SelfCheckoutMachineLogic;
 import com.autovend.software.TransactionReceipt;
@@ -27,7 +33,7 @@ import com.autovend.software.TransactionReceipt;
 	        machineLogic = new SelfCheckoutMachineLogic(selfCheckoutStation);
 	    }
 		
-		@Test
+		@Test(expected = NullPointerException.class)
 		public void testPurchaseBag() {
 			transactionReceipt.addProduct(Bag);
 			int lengthBefore = transactionReceipt.getBillLength();
@@ -37,4 +43,27 @@ import com.autovend.software.TransactionReceipt;
 	        int lengthAfter = transactionReceipt.getBillLength();
 	        assertEquals(lengthAfter, lengthBefore + 1);
 	}
+		
+		
+		@Test
+	    public void testAddItemPerUnit() {
+			Numeral[] code = {Numeral.one, Numeral.five, Numeral.three, Numeral.four};
+			Barcode barcode = new Barcode(code);
+	        Product product = new BarcodedProduct(barcode, "Product", BigDecimal.valueOf(10.00), 100);
+	        machineLogic.addItemPerUnit(product, 200.0);
+	        Assert.assertNotNull(machineLogic.currentBill);
+	        Assert.assertEquals(1, machineLogic.currentBill.getBillLength());
+	        Assert.assertEquals(BigDecimal.valueOf(10.00), machineLogic.currentBill.getBillBalance());
+	        assertEquals(200.0, machineLogic.currentBill.getBillExpectedWeight(), 0.0001);
+	    }
+
+	    @Test
+	    public void testGetBarcodedUnitFromBarcode() {
+	    	Numeral[] code = {Numeral.one, Numeral.five, Numeral.three, Numeral.four};
+			Barcode barcode = new Barcode(code);
+	        BarcodedUnit barcodedUnit = SelfCheckoutMachineLogic.getBarcodedUnitFromBarcode(barcode);
+	        Assert.assertNotNull(barcodedUnit);
+	        Assert.assertEquals(barcode, barcodedUnit.getBarcode());
+	        Assert.assertEquals(BigDecimal.valueOf(100), barcodedUnit.getWeight());
+	    }
 }

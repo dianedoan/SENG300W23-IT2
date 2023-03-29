@@ -10,8 +10,11 @@ import java.util.Currency;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.autovend.Barcode;
+import com.autovend.Numeral;
 import com.autovend.devices.OverloadException;
 import com.autovend.devices.SelfCheckoutStation;
+import com.autovend.products.BarcodedProduct;
 import com.autovend.products.Product;
 import com.autovend.software.SelfCheckoutMachineLogic;
 import com.autovend.software.TransactionReceipt;
@@ -53,13 +56,40 @@ import com.autovend.software.TransactionReceipt;
 //        assertEquals(1, machineLogic.getNumberOfBags());
         assertEquals(machineLogic.addOwnBags(), "Please add your own bags.");
     }
+    
+    @Test
+    public void testAddOwnBag1() throws OverloadException {
+    	ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        PrintStream printStream = new PrintStream(outputStream);
+
+        PrintStream originalPrintStream = System.out;
+        System.setOut(printStream);
+        
+    	boolean selfCheckOutBlocked = true;
+    	Numeral[] code = {Numeral.one, Numeral.five, Numeral.three, Numeral.four};
+		Barcode barcode = new Barcode(code);
+        Product product = new BarcodedProduct(barcode, "Product", BigDecimal.valueOf(10.00), 100);
+        machineLogic.addOwnBags();
+        String output = outputStream.toString().trim();
+
+        assertEquals("Please add your own bags.", output);
+        
+//        try {
+//        	Product bag = transactionReceipt.getProductAt(1);
+//            machineLogic.addOwnBags();
+//            String output = outputStream.toString().trim();
+//
+//            assertEquals("Please add your own bags.", output);
+//        } finally {
+//            System.setOut(originalPrintStream);
+//        }
+    }
 
     @Test
     public void myTest() throws OverloadException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         PrintStream printStream = new PrintStream(outputStream);
 
-        // Replace System.out with a mocked PrintStream that writes to the ByteArrayOutputStream
         PrintStream originalPrintStream = System.out;
         System.setOut(printStream);
 
