@@ -57,21 +57,21 @@ public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, Coi
 			
 			boolean inputCoin = false;
 			
-//			
-//			/*
-//			 * Setter for total
-//			 */
-//			public void setTotalCoin(BigDecimal totalCoin) {
-//				this.totalCoin = totalCoin;
-//			}
-//			
-//
-//			/*
-//			 * Getter for total
-//			 */
-//			public BigDecimal getTotal(BigDecimal total) {
-//				return this.totalCoin;
-//			}
+			
+			/*
+			 * Setter for total
+			 */
+			public void setTotal(BigDecimal totalCoin) {
+				this.totalCoin = totalCoin;
+			}
+			
+
+			/*
+			 * Getter for total
+			 */
+			public BigDecimal getTotal(BigDecimal total) {
+				return this.totalCoin;
+			}
 			
 
 			public PayWithCoin(SelfCheckoutStation selfCheckoutStation, CustomerIO customer) throws DisabledException, OverloadException{
@@ -132,7 +132,7 @@ public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, Coi
 				
 				// check if the remaining amount is greater than zero
 				if(remainingAmount > 0) {
-					// Return false as bill not fully paid and thus no change given
+					// Return false as coin not fully paid and thus no change given
 					return false;
 				}
 				
