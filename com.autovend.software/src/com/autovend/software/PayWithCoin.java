@@ -76,28 +76,28 @@ public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, Coi
 
 			public PayWithCoin(SelfCheckoutStation selfCheckoutStation, CustomerIO customer) throws DisabledException, OverloadException{
 				
-				 inputCoin = selfCheckoutStation.coinInput.accept(coin);
+				 inputCoin = selfCheckoutStation.coinSlot.accept(coin);
 				 	
 				 	customer = new CustomerIO();
 				 	remainingAmount = this.customer.getAmount();
 					
 					attendant = new AttendantIO();
 					cash = new CashIO();
-					//selfCheckoutStation = sc;
+
 					selfCheckoutStation.coinValidator.register(this);
-					selfCheckoutStation.coinInput.register(this);
+					selfCheckoutStation.coinSlot.register(this);
 					selfCheckoutStation.coinDispensers.get(5).register(this);
 					selfCheckoutStation.coinDispensers.get(10).register(this);
 					selfCheckoutStation.coinDispensers.get(25).register(this);
-					selfCheckoutStation.coinDispensers.get(10).register(this);
+					selfCheckoutStation.coinDispensers.get(100).register(this);
 					selfCheckoutStation.coinDispensers.get(200).register(this);
 					
 					// Initialize the five dispensers for each denomination being used in the machine
-					dispenser5 = selfCheckoutStation.billDispensers.get(5);
-					dispenser10 = selfCheckoutStation.billDispensers.get(10);
-					dispenser20 = selfCheckoutStation.billDispensers.get(25);
-					dispenser50 = selfCheckoutStation.billDispensers.get(100);
-					dispenser100 = selfCheckoutStation.billDispensers.get(200);
+					dispenser5 = selfCheckoutStation.coinDispensers.get(5);
+					dispenser10 = selfCheckoutStation.coinDispensers.get(10);
+					dispenser25 = selfCheckoutStation.coinDispensers.get(25);
+					dispenser100 = selfCheckoutStation.coinDispensers.get(100);
+					dispenser200 = selfCheckoutStation.coinDispensers.get(200);
 					
 					dispensers[0] = dispenser5;
 					dispensers[1] = dispenser10;
