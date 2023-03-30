@@ -31,7 +31,7 @@ public class SelfCheckoutMachineLogic{
 	public TransactionReceipt currentBill;
 	public boolean machineLocked = false;
 
-	// varibles for pay with card
+	// variables for pay with card
 	public String cardType;
 	public CardIssuer bank;
 	public Card.CardData cardData;
@@ -393,7 +393,7 @@ public class SelfCheckoutMachineLogic{
 		int holdNum;
 		if (attempt > 3){
 			bank.block(cardData.getNumber());
-			System.out.println("Maximum attempts have been reached, try to contact with the bank");
+			System.out.println("Maximum attempts have been reached, please contact your bank.");
 			return;
 		}
 		holdNum = bank.authorizeHold(cardData.getNumber(), total);
@@ -402,7 +402,7 @@ public class SelfCheckoutMachineLogic{
 			attempt =1;
 		}
 		if (holdNum == -1) {
-			System.out.println("The card could be blocked or not insufficient balance!");
+			System.out.println("The card could be blocked or insufficient balance!");
 			return;
 		} else {
 			System.out.println("Hold number: " + holdNum);
@@ -413,11 +413,11 @@ public class SelfCheckoutMachineLogic{
 					customerIO.setAmount(BigDecimal.valueOf(0));
 				}
 				else {
-					System.out.println("The card could be blocked or not insufficient balance!");
+					System.out.println("The card could be blocked or insufficient balance!");
 				}
 			}
 			else {
-				System.out.println("The card could be blocked or not insufficient balance!");
+				System.out.println("The card could be blocked or insufficient balance!");
 			}
 		}
 	}
