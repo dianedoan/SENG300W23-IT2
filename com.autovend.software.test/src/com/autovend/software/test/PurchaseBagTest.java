@@ -1,5 +1,7 @@
 package com.autovend.software.test;
 
+//Nam Nguyen Vu - UCID: 30154892
+
 import static org.junit.Assert.assertEquals;
 
 import java.math.BigDecimal;
@@ -12,8 +14,8 @@ import org.junit.Test;
 import com.autovend.Barcode;
 import com.autovend.BarcodedUnit;
 import com.autovend.Numeral;
+import com.autovend.devices.OverloadException;
 import com.autovend.devices.SelfCheckoutStation;
-import com.autovend.devices.SimulationException;
 import com.autovend.products.BarcodedProduct;
 import com.autovend.products.Product;
 import com.autovend.software.SelfCheckoutMachineLogic;
@@ -32,18 +34,6 @@ import com.autovend.software.TransactionReceipt;
 	        		5, 2);
 	        machineLogic = new SelfCheckoutMachineLogic(selfCheckoutStation);
 	    }
-		
-		@Test(expected = NullPointerException.class)
-		public void testPurchaseBag() {
-			transactionReceipt.addProduct(Bag);
-			int lengthBefore = transactionReceipt.getBillLength();
-			Product bag = transactionReceipt.getProductAt(1);
-			SelfCheckoutMachineLogic machineLogic = null;
-	        machineLogic.Purchase_bags(1);
-	        int lengthAfter = transactionReceipt.getBillLength();
-	        assertEquals(lengthAfter, lengthBefore + 1);
-	}
-		
 		
 		@Test
 	    public void testAddItemPerUnit() {
@@ -65,5 +55,34 @@ import com.autovend.software.TransactionReceipt;
 	        Assert.assertNotNull(barcodedUnit);
 	        Assert.assertEquals(barcode, barcodedUnit.getBarcode());
 	        Assert.assertEquals(BigDecimal.valueOf(100), barcodedUnit.getWeight());
+	    }
+	    
+	    @Test
+	    public void testPurchaseBag1() throws OverloadException {
+	    	machineLogic.addOwnBags(); // call this to set the machine lock to false
+	        
+	    	Numeral[] code = {Numeral.one, Numeral.five, Numeral.three, Numeral.four};
+			Barcode barcode = new Barcode(code);
+	        Product product = new BarcodedProduct(barcode, "Product", BigDecimal.valueOf(10.00), 100);
+	        machineLogic.addItemPerUnit(product, 200.0);
+	        // test with valid number of bags
+	    	machineLogic.Purchase_bags(2);
+	        assertEquals("Error: Weight not within acceptable range", machineLogic.message);
+	        assertEquals("Expected response did not match", "Y", machineLogic.response);
+	        
+	    }
+	    
+	    @Test
+	    public void testPurchaseBag2() throws OverloadException {
+	    	machineLogic.addOwnBags(); // call this to set the machine lock to false
+	        
+	    	Numeral[] code = {Numeral.one, Numeral.five, Numeral.three, Numeral.four};
+			Barcode barcode = new Barcode(code);
+	        Product product = new BarcodedProduct(barcode, "Product", BigDecimal.valueOf(10.00), 100);
+	        machineLogic.addItemPerUnit(product, 200.0);
+	        // test with valid number of bags
+	    	machineLogic.Purchase_bags(0);
+	        assertEquals("Error: Weight not within acceptable range", machineLogic.message);
+	        
 	    }
 }

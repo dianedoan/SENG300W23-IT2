@@ -1,13 +1,12 @@
+// Nam Nguyen Vu - UCID: 30154892
+
 package com.autovend.software.test;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.util.Currency;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -65,10 +64,10 @@ import com.autovend.software.TransactionReceipt;
       // simulate customer adding bags and confirming with 'Y' response
       String response = "Y";
       assertEquals(response, "Y");
-      // simulate weight change of 0.5 kg
+      // simulate weight change of 0.5 g
       
       ElectronicScale electronicScale = new ElectronicScale(100, 1);
-  	  machineLogic.esObserver.reactToWeightChangedEvent(electronicScale, Double.valueOf(0.5));
+  	  machineLogic.esObserver.reactToWeightChangedEvent(electronicScale, 10.0);
       double expectedWeightChange = 0.0;
       double actualWeightChange = electronicScale.getCurrentWeight();
       assertEquals(expectedWeightChange, actualWeightChange, 0.0);
@@ -116,6 +115,23 @@ import com.autovend.software.TransactionReceipt;
     @Test
     public void testAddBags4() throws OverloadException {
 
+    	machineLogic.setResponse("Y");
+    	ElectronicScale electronicScale = new ElectronicScale(100, 1);
+    	machineLogic.esObserver.reactToWeightChangedEvent(electronicScale, 10.0);
+    	machineLogic.addOwnBags();
+    	
+    	String expected = "Error: Weight not within acceptable range";
+    	assertEquals(expected, machineLogic.message);
+    }
+    
+    @Test
+    public void testAddBags5() throws OverloadException {
+
+    	Numeral[] code = {Numeral.one, Numeral.five, Numeral.three, Numeral.four};
+		Barcode barcode = new Barcode(code);
+        Product product = new BarcodedProduct(barcode, "Product", BigDecimal.valueOf(10.00), 100);
+        machineLogic.addItemPerUnit(product, 100);
+    	
     	machineLogic.setResponse("Y");
     	ElectronicScale electronicScale = new ElectronicScale(100, 1);
     	machineLogic.esObserver.reactToWeightChangedEvent(electronicScale, 10.0);
