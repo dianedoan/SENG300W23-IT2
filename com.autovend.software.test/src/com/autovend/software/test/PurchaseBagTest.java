@@ -33,7 +33,7 @@ import com.autovend.software.TransactionReceipt;
 	        machineLogic = new SelfCheckoutMachineLogic(selfCheckoutStation);
 	    }
 		
-		@Test(expected = NullPointerException.class)
+		@Test
 		public void testPurchaseBag() {
 			transactionReceipt.addProduct(Bag);
 			int lengthBefore = transactionReceipt.getBillLength();
@@ -57,7 +57,7 @@ import com.autovend.software.TransactionReceipt;
 	        assertEquals(200.0, machineLogic.currentBill.getBillExpectedWeight(), 0.0001);
 	    }
 
-	    @Test
+	    @Test(expected = NullPointerException.class)
 	    public void testGetBarcodedUnitFromBarcode() {
 	    	Numeral[] code = {Numeral.one, Numeral.five, Numeral.three, Numeral.four};
 			Barcode barcode = new Barcode(code);

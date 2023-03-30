@@ -1,13 +1,20 @@
 package com.autovend.software;
 
 import java.math.BigDecimal;
-import java.util.Currency;
 import java.util.Scanner;
 import java.util.ArrayList;
 
-import com.autovend.*;
-import com.autovend.devices.*;
-import com.autovend.external.CardIssuer;
+import com.autovend.Barcode;
+import com.autovend.BarcodedUnit;
+import com.autovend.Bill;
+import com.autovend.PriceLookUpCode;
+import com.autovend.PriceLookUpCodedUnit;
+import com.autovend.devices.BillDispenser;
+import com.autovend.devices.BillSlot;
+import com.autovend.devices.ElectronicScale;
+import com.autovend.devices.EmptyException;
+import com.autovend.devices.OverloadException;
+import com.autovend.devices.SelfCheckoutStation;
 import com.autovend.external.ProductDatabases;
 import com.autovend.products.BarcodedProduct;
 import com.autovend.products.PLUCodedProduct;
@@ -42,25 +49,19 @@ public class SelfCheckoutMachineLogic{
 	public TransactionReceipt currentBill;
 	public boolean machineLocked = false;
 	
-	// variables for pay with card
-	public String cardType;
-	public CardIssuer bank;
-	public Card.CardData cardData;
-	public boolean cardReadEvent;
-	public int attempt;
-	
 	public ElectronicScaleObserverStub esObserver = new ElectronicScaleObserverStub(this);
 	public BarcodeScannerObserverStub bsObserver = new BarcodeScannerObserverStub(this);
 	public BillSlotObserverStub listener_1 = new BillSlotObserverStub(this);
 	public BillValidatorObserverStub listener_2 = new BillValidatorObserverStub(this);
-	
-	public CardReaderObserverStub card_listener = new CardReaderObserverStub(this);
 	
 	public PrintReceipt printReceipt; //This is the controller for printing the receipt
 	public AttendantIO attendant = new AttendantIO(); //Creating an attendantIO that will receive and store calls to attendant
 	public CustomerDisplayIO customerDisplay = new CustomerDisplayIO(); //Creating a display where messages to customers can go
 	public CustomerIO customerIO = new CustomerIO(); // create customer i/o
 	public CashIO cashIO = new CashIO(); // create cash i/o
+	
+	public String message = "";
+	public String response = "Y";
 	
 	/**Codes for reasons the Machine is Locked
 	 * -1: No Reason
@@ -112,7 +113,7 @@ public class SelfCheckoutMachineLogic{
 		for(int i = 0; i < this.numberOfLockCodes; i++) {
 			listOfLockCodes[i] = i-1;
 		}
-		
+		this.station = scStation;
 		scStation.baggingArea.register(esObserver);
 		scStation.baggingArea.disable();
 		scStation.baggingArea.enable();
@@ -122,20 +123,16 @@ public class SelfCheckoutMachineLogic{
 		scStation.handheldScanner.enable();
 		
 		scStation.billInput.register(listener_1);
-
-		scStation.cardReader.register(card_listener);
-		scStation.cardReader.enable();
 		
 		printReceipt = new PrintReceipt(scStation, this, attendant);
 		
 		this.total = new BigDecimal(-1);
 		
-		bank = new CardIssuer("RBC");
-		attempt = 1;
+		
+		
 		
 		this.setMachineLock(false);
 	}
-
 
 	
 	/**
@@ -167,6 +164,8 @@ public class SelfCheckoutMachineLogic{
 	}
 	
 	
+
+
 	public static BarcodedUnit getBarcodedUnitFromBarcode(Barcode barcode) {
 		BarcodedProduct foundProduct = getBarcodedProductFromBarcode(barcode);
 		
@@ -177,8 +176,9 @@ public class SelfCheckoutMachineLogic{
 }
 
 
+
 	/**
-	 * 	Takes a barcode and returns a barcoded product if it is a valid barcode
+	 * 	Takes a barecode and returns a barcoded product if it is a valid barcode
 	 * Otherwise returns null
 	 * @param barcode: The barcode of the Barcoded Product being looked for
 	 * @return If the barcode corossponds to one in the database, return that product otherwise return null
@@ -387,16 +387,23 @@ public class SelfCheckoutMachineLogic{
 	 * @throws OverloadException: If the extra character would spill off the end of the line.
 	 */
 		
+	public void setResponse(String res) {
+		response = res;
+	}
+	
+	// Initialize message 
 	public void addOwnBags() throws OverloadException {
 		boolean selfCheckOutBlocked = false;
-		if (selfCheckOutBlocked) {
+		if (!selfCheckOutBlocked) {
 			// 1. Customer I/O: Signals that the customer wants to add their own bags.
-			System.out.println("Please add your own bags.");
+			//System.out.println("Please add your own bags.");
+			message = "Please add your own bags.";
 			
 			// 2. System: Indicates that the customer should add their own bags now.
 			Scanner input = new Scanner(System.in);
-			System.out.println("Have you added the bag(s)? (Y/N)");
-			String response = input.nextLine();
+			//System.out.println("Have you added the bag(s)? (Y/N)");
+			message = "Have you added the bag(s)? (Y/N)";
+//			String response = input.nextLine();
 			
 			// 3. Customer I/O: Signals that the customer has finished adding their own bags.
 			if (response.equalsIgnoreCase("Y")) {
@@ -412,29 +419,37 @@ public class SelfCheckoutMachineLogic{
 					// 6. System: Signals to the Attendant I/O the need to approve the added bags.
 					AttendantIO callAttendant = new AttendantIO();
 					callAttendant.informAttendant("Need approval for adding own bags");
-					System.out.println("Waiting for attendant approval");
+					//System.out.println("Waiting for attendant approval");
+					message = "Waiting for attendant approval";
 					
 					// 7. Attendant I/O: Signals approval of the added bags
 					Scanner attendantInput = new Scanner(System.in);
-					System.out.println("Approve customer bag? (Y/N)");
+					//System.out.println("Approve customer bag? (Y/N)");
+					message = "Approve customer bag? (Y/N)";
 					String attendantResponse = input.nextLine();
 					if (response.equalsIgnoreCase("Y")) {
 						// 8. System: Unblocks the self-checkout station.
 						selfCheckOutBlocked = false;
 						setMachineLock(selfCheckOutBlocked);
 						// 9. System: Signals to the Customer I/O that the customer may now continue.
-						System.out.println("You may continue with your checkout");
+						//System.out.println("You may continue with your checkout");
+						message = "You may continue with your checkout";
 					}
 					// Exception: The attendant does not want to approve the added bags
 					else if(response.equalsIgnoreCase("N")) {
-						System.out.println("Attendant did not approve the added bags. Please remove the items.");
+						//System.out.println("Attendant did not approve the added bags. Please remove the items.");
+						message = "Attendant did not approve the added bags. Please remove the items.";
 					}
 				}
 				// Exception: The System is not ready to note weight discrepancies
 				else {
-					System.out.println("Error: Weight not within acceptable range");
+					//System.out.println("Error: Weight not within acceptable range");
+					message = "Error: Weight not within acceptable range";
 				}
 			}
+		} else {
+			//System.out.println("Error: Weight not within acceptable range");
+			message = "Approve customer bag? (Y/N)";
 		}
 	}
 	
@@ -560,37 +575,4 @@ public class SelfCheckoutMachineLogic{
 		//If they match, method returns false
 		return false;
 	}
-	
-	public void payWithCard(){
-		int holdNum;
-		do{
-			if (attempt > 3){
-				bank.block(cardData.getNumber());
-				System.out.println("Maximum attempts have been reached, try to contact with the bank");
-				return;
-			}
-			holdNum = bank.authorizeHold(cardData.getNumber(), total);
-			attempt++;
-		}while (holdNum==-1);
-		attempt =1;
-		if (holdNum == -1) {
-			System.out.println("The card could be blocked or not insufficient balance!");
-		} else {
-			System.out.println("Hold number: " + holdNum);
-			boolean releaseHoldStatus = bank.releaseHold(cardData.getNumber(), holdNum);
-			if (releaseHoldStatus){
-				boolean postTransactionStatus = bank.postTransaction(cardData.getNumber(), holdNum, total);
-				if (postTransactionStatus){
-					customerIO.setAmount(BigDecimal.valueOf(0));
-				}
-				else {
-					System.out.println("The card could be blocked or not insufficient balance!");
-				}
-			}
-			else {
-				System.out.println("The card could be blocked or not insufficient balance!");
-			}
-		}
-	}
 }
-
