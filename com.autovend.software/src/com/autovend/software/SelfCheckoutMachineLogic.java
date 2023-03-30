@@ -1,20 +1,16 @@
 package com.autovend.software;
 
 import java.math.BigDecimal;
+import java.util.Currency;
 import java.util.Scanner;
 import java.util.ArrayList;
 
-import com.autovend.Barcode;
-import com.autovend.BarcodedUnit;
-import com.autovend.Bill;
-import com.autovend.PriceLookUpCode;
-import com.autovend.PriceLookUpCodedUnit;
-import com.autovend.devices.BillDispenser;
-import com.autovend.devices.BillSlot;
-import com.autovend.devices.ElectronicScale;
-import com.autovend.devices.EmptyException;
-import com.autovend.devices.OverloadException;
-import com.autovend.devices.SelfCheckoutStation;
+import com.autovend.*;
+import com.autovend.devices.*;
+import com.autovend.external.CardIssuer;
+import com.autovend.software.BillSlotObserverStub;
+import com.autovend.software.BillValidatorObserverStub;
+import com.autovend.products.BarcodedProduct;
 import com.autovend.external.ProductDatabases;
 import com.autovend.products.BarcodedProduct;
 import com.autovend.products.PLUCodedProduct;
@@ -48,11 +44,20 @@ public class SelfCheckoutMachineLogic{
 	
 	public TransactionReceipt currentBill;
 	public boolean machineLocked = false;
+
+	// varibles for pay with card
+	public String cardType;
+	public CardIssuer bank;
+	public Card.CardData cardData;
+	public boolean cardReadEvent;
+	public int attempt;
 	
 	public ElectronicScaleObserverStub esObserver = new ElectronicScaleObserverStub(this);
 	public BarcodeScannerObserverStub bsObserver = new BarcodeScannerObserverStub(this);
 	public BillSlotObserverStub listener_1 = new BillSlotObserverStub(this);
 	public BillValidatorObserverStub listener_2 = new BillValidatorObserverStub(this);
+
+	public CardReaderObserverStub card_listener = new CardReaderObserverStub(this);
 	
 	public PrintReceipt printReceipt; //This is the controller for printing the receipt
 	public AttendantIO attendant = new AttendantIO(); //Creating an attendantIO that will receive and store calls to attendant
@@ -120,13 +125,16 @@ public class SelfCheckoutMachineLogic{
 		scStation.handheldScanner.enable();
 		
 		scStation.billInput.register(listener_1);
+
+		scStation.cardReader.register(card_listener);
+		scStation.cardReader.enable();
 		
 		printReceipt = new PrintReceipt(scStation, this, attendant);
 		
 		this.total = new BigDecimal(-1);
 		
-		
-		
+		bank = new CardIssuer("RBC");
+		attempt = 1;
 		
 		this.setMachineLock(false);
 	}
@@ -436,13 +444,44 @@ public class SelfCheckoutMachineLogic{
 	}
 	
 	public void Purchase_bags(int number_bags) {
-		CustomerDisplayIO.informCustomer("You want to purchase"+Double.valueOf(number_bags)+"\n bags");
-		
-		addItemPerUnit(bag, number_bags);
-		weightChanged(number_bags);
-		CustomerDisplayIO.informCustomer("The operation is complete");
-		
-		
+//		CustomerDisplayIO.informCustomer("You want to purchase"+Double.valueOf(number_bags)+"\n bags");
+//
+//		addItemPerUnit(bag, number_bags);
+//		weightChanged(number_bags);
+//		CustomerDisplayIO.informCustomer("The operation is complete");
+
+
+	}
+	public void payWithCard(){
+		int holdNum;
+		do{
+			if (attempt > 3){
+				bank.block(cardData.getNumber());
+				System.out.println("Maximum attempts have been reached, try to contact with the bank");
+				return;
+			}
+			holdNum = bank.authorizeHold(cardData.getNumber(), total);
+			attempt++;
+		}while (holdNum==-1);
+		attempt =1;
+		if (holdNum == -1) {
+			System.out.println("The card could be blocked or not insufficient balance!");
+		} else {
+			System.out.println("Hold number: " + holdNum);
+			boolean releaseHoldStatus = bank.releaseHold(cardData.getNumber(), holdNum);
+			if (releaseHoldStatus){
+				boolean postTransactionStatus = bank.postTransaction(cardData.getNumber(), holdNum, total);
+				if (postTransactionStatus){
+					customerIO.setAmount(BigDecimal.valueOf(0));
+				}
+				else {
+					System.out.println("The card could be blocked or not insufficient balance!");
+				}
+			}
+			else {
+				System.out.println("The card could be blocked or not insufficient balance!");
+			}
+		}
 	}
 	
 	/**
