@@ -41,7 +41,7 @@ public class SelfCheckoutMachineLogic{
 	
 	public TransactionReceipt currentBill;
 	public boolean machineLocked = false;
-	
+
 	// variables for pay with card
 	public String cardType;
 	public CardIssuer bank;
@@ -53,7 +53,7 @@ public class SelfCheckoutMachineLogic{
 	public BarcodeScannerObserverStub bsObserver = new BarcodeScannerObserverStub(this);
 	public BillSlotObserverStub listener_1 = new BillSlotObserverStub(this);
 	public BillValidatorObserverStub listener_2 = new BillValidatorObserverStub(this);
-	
+
 	public CardReaderObserverStub card_listener = new CardReaderObserverStub(this);
 	
 	public PrintReceipt printReceipt; //This is the controller for printing the receipt
@@ -64,7 +64,7 @@ public class SelfCheckoutMachineLogic{
 	
 	public String message = "";
 	public String response = "Y";
-	
+
 	/**Codes for reasons the Machine is Locked
 	 * -1: No Reason
 	 * 0: Not Locked:
@@ -81,10 +81,9 @@ public class SelfCheckoutMachineLogic{
 	public boolean billRemovedEvent;
 	public boolean illInvalidEvent;
 	private SelfCheckoutStation station;
-	
+
 	private ArrayList<BarcodedUnit> scannedItems = new ArrayList<BarcodedUnit>();
 	private ArrayList<PriceLookUpCodedUnit> pluItems = new ArrayList<PriceLookUpCodedUnit>();
-	
 	public int getReasonForLock() {
 		return reasonForLock;
 	}
@@ -139,7 +138,6 @@ public class SelfCheckoutMachineLogic{
 		this.setMachineLock(false);
 	}
 
-
 	
 	/**
 	 * 
@@ -170,6 +168,8 @@ public class SelfCheckoutMachineLogic{
 	}
 	
 	
+
+
 	public static BarcodedUnit getBarcodedUnitFromBarcode(Barcode barcode) {
 		BarcodedProduct foundProduct = getBarcodedProductFromBarcode(barcode);
 		
@@ -178,6 +178,7 @@ public class SelfCheckoutMachineLogic{
 	
 		return bUnit;
 }
+
 
 
 	/**
@@ -203,13 +204,13 @@ public class SelfCheckoutMachineLogic{
 	 */
 	public static PLUCodedProduct getPLUProductFromPlu(PriceLookUpCode plu) {
 		PLUCodedProduct foundProduct = null;
-		
+
 		if(ProductDatabases.PLU_PRODUCT_DATABASE.containsKey(plu)) {
 			foundProduct = ProductDatabases.PLU_PRODUCT_DATABASE.get(plu);
 		};
 		return foundProduct;
 	}
-	
+
 	/**
 	 * Takes a plu code, finds the associated product from the database, and creates an associated item object
 	 * @param plu
@@ -218,12 +219,12 @@ public class SelfCheckoutMachineLogic{
 	 */
 	public static PriceLookUpCodedUnit getPLUUnitFromPLU(PriceLookUpCode plu, Double weight) {
 		PLUCodedProduct foundProduct = getPLUProductFromPlu(plu);
-		
+
 		PriceLookUpCodedUnit pluUnit = new PriceLookUpCodedUnit(plu, weight);
-		
+
 		return pluUnit;
 	}
-	
+
 	/**
 	 * A getter for the total number of a product is available in stock
 	 * @param product
@@ -242,7 +243,7 @@ public class SelfCheckoutMachineLogic{
 		Integer current = ProductDatabases.INVENTORY.get(product);
 		ProductDatabases.INVENTORY.put(product, current-amount);
 	}
-	
+
 	/**
 	 * Tells the machine to wait until the customer chnages the weight of the scale
 	 */
@@ -383,7 +384,6 @@ public class SelfCheckoutMachineLogic{
 		
 	}
 	
-
 	/** 
 	 * Use Case: Add Own Bags
 	 * Allows the customer to add their own bags to the bagging area without causing a weight discrepancy
@@ -394,8 +394,8 @@ public class SelfCheckoutMachineLogic{
 	public void setResponse(String res) {
 		response = res;
 	}
-	
-	// Initialize message 
+
+	// Initialize message
 	public void addOwnBags() throws OverloadException {
 		boolean selfCheckOutBlocked = false;
 		if (!selfCheckOutBlocked) {
@@ -459,23 +459,23 @@ public class SelfCheckoutMachineLogic{
 	
 	public void Purchase_bags(int number_bags) {
 		customerDisplay.informCustomer("You want to purchase"+Integer.valueOf(number_bags)+" bags");
-		
+
 		addItemPerUnit(bag, number_bags);
 		weightChanged(number_bags);
 		customerDisplay.informCustomer("The operation is complete");
-		
-		
+
+
 	}
-	
+
 	/**
 	 * Allows customer to add an item using a price lookup instead of scanning
-	 * 
+	 *
 	 * @param plu
 	 * @param weight
 	 * @return
 	 */
 	public boolean addItemPLU(PriceLookUpCode plu, Double weight) {
-		//A valid PLU code must be provided 
+		//A valid PLU code must be provided
 		if (plu == null) {
 			throw new  NullPointerException("PLU cannot be null!");
 		}
@@ -483,7 +483,7 @@ public class SelfCheckoutMachineLogic{
 		if(getPLUProductFromPlu(plu) != null) {
 			//If it exists, it gets it from the database
 			PLUCodedProduct product = getPLUProductFromPlu(plu);
-			//Checks that the amount of that product in stock is not 0. If it is, method returns false. 
+			//Checks that the amount of that product in stock is not 0. If it is, method returns false.
 			if(getProductInventory(product) == 0) {
 				return false;
 			}
@@ -508,11 +508,11 @@ public class SelfCheckoutMachineLogic{
 			return false;
 		}
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * Allows customer to add an item by scanning the barcode
-	 * 
+	 *
 	 * @param barcode
 	 * @return
 	 */
@@ -521,7 +521,7 @@ public class SelfCheckoutMachineLogic{
 		if (barcode == null) {
 			throw new  NullPointerException("Barcode cannot be null!");
 		}
-		
+
 		//Checks if the barcode provided actually correlates to a product in the database by calling the getBarcodedProductfromBarcode method
 		if(getBarcodedUnitFromBarcode(barcode) != null) {
 			//If it exists, it gets it from the database
@@ -551,23 +551,23 @@ public class SelfCheckoutMachineLogic{
 			return false;
 		}
 	}
-	
+
 	/**
 	 * A method that checks whether there's a weight discrepancy after items have been added to bagging area
 	 * @return
-	 * @throws OverloadException 
+	 * @throws OverloadException
 	 */
 	public boolean weightDiscrepancy() throws OverloadException{
 		//Loops through array list containing all scanned items and adds their expected weight to the total expected weight
 		for(int i = 0; i < this.scannedItems.size(); i++) {
 			this.totalExpectedWeight = this.totalExpectedWeight.add(BigDecimal.valueOf(this.scannedItems.get(i).getWeight()));
 		}
-		
+
 		//Loops through array list containing all plu added items and adds their expected weight to the total expected weight
 		for(int i = 0; i < this.pluItems.size(); i++) {
 			this.totalExpectedWeight = this.totalExpectedWeight.add(BigDecimal.valueOf(this.pluItems.get(i).getWeight()));
 		}
-		
+
 		//Gets the current weight on the station's bagging area
 		double currentWeight = this.station.baggingArea.getCurrentWeight();
 		//total expected weight must match the total weight on bagging area
@@ -580,21 +580,21 @@ public class SelfCheckoutMachineLogic{
 		//If they match, method returns false
 		return false;
 	}
-	
 	public void payWithCard(){
 		int holdNum;
-		do{
-			if (attempt > 3){
-				bank.block(cardData.getNumber());
-				System.out.println("Maximum attempts have been reached, try to contact with the bank");
-				return;
-			}
-			holdNum = bank.authorizeHold(cardData.getNumber(), total);
-			attempt++;
-		}while (holdNum==-1);
-		attempt =1;
+		if (attempt > 3){
+			bank.block(cardData.getNumber());
+			System.out.println("Maximum attempts have been reached, please contact your bank.");
+			return;
+		}
+		holdNum = bank.authorizeHold(cardData.getNumber(), total);
+		attempt++;
+		if (holdNum!=-1){
+			attempt =1;
+		}
 		if (holdNum == -1) {
-			System.out.println("The card could be blocked or not insufficient balance!");
+			System.out.println("The card could be blocked or insufficient balance!");
+			return;
 		} else {
 			System.out.println("Hold number: " + holdNum);
 			boolean releaseHoldStatus = bank.releaseHold(cardData.getNumber(), holdNum);
@@ -604,14 +604,12 @@ public class SelfCheckoutMachineLogic{
 					customerIO.setAmount(BigDecimal.valueOf(0));
 				}
 				else {
-					System.out.println("The card could be blocked or not insufficient balance!");
+					System.out.println("The card could be blocked or insufficient balance!");
 				}
 			}
 			else {
-				System.out.println("The card could be blocked or not insufficient balance!");
+				System.out.println("The card could be blocked or insufficient balance!");
 			}
 		}
 	}
-//>>>>>>> branch 'main' of https://github.com/dianedoan/SENG300W23-IT2.git
 }
-

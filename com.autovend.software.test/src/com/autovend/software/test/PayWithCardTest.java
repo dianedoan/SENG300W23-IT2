@@ -108,4 +108,5 @@ public class PayWithCardTest {
 		machineLogic.payWithCard();
 		station.cardReader.remove();
 	}
+	
 }
