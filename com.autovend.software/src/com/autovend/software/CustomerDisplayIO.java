@@ -1,8 +1,5 @@
 package com.autovend.software;
-import java.util.*;
-import com.autovend.devices
-
-import com.autovend.IllegalDigitException;
+import java.util.Scanner;
 /*
  * Simulates sending messages to the customer's display and keeping track of the most recent message.
  * Also simulates getting input from the customer
@@ -51,18 +48,19 @@ public class CustomerDisplayIO {
 		}catch(IllegalArgumentException e) {
 			System.out.println("Enter proper membership number.");
 		}
+		return 0;
 		
 
-		
-		
 	}
+}
+
+		
+	
 
 //<<<<<<< HEAD
 	
-	
-	
-	
-=======
+
+
 //>>>>>>> branch 'main' of https://github.com/dianedoan/SENG300W23-IT2.git
 
-}
+
