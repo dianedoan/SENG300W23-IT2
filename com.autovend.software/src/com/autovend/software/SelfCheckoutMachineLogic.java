@@ -1,9 +1,14 @@
-package com.autovend;
+package com.autovend.software;
 
 import java.math.BigDecimal;
 import java.util.Scanner;
 import java.util.ArrayList;
 
+import com.autovend.Barcode;
+import com.autovend.BarcodedUnit;
+import com.autovend.Bill;
+import com.autovend.PriceLookUpCode;
+import com.autovend.PriceLookUpCodedUnit;
 import com.autovend.devices.BillDispenser;
 import com.autovend.devices.BillSlot;
 import com.autovend.devices.ElectronicScale;
@@ -54,6 +59,9 @@ public class SelfCheckoutMachineLogic{
 	public CustomerDisplayIO customerDisplay = new CustomerDisplayIO(); //Creating a display where messages to customers can go
 	public CustomerIO customerIO = new CustomerIO(); // create customer i/o
 	public CashIO cashIO = new CashIO(); // create cash i/o
+	
+	public String message = "";
+	public String response = "Y";
 	
 	/**Codes for reasons the Machine is Locked
 	 * -1: No Reason
@@ -379,16 +387,23 @@ public class SelfCheckoutMachineLogic{
 	 * @throws OverloadException: If the extra character would spill off the end of the line.
 	 */
 		
+	public void setResponse(String res) {
+		response = res;
+	}
+	
+	// Initialize message 
 	public void addOwnBags() throws OverloadException {
 		boolean selfCheckOutBlocked = false;
 		if (!selfCheckOutBlocked) {
 			// 1. Customer I/O: Signals that the customer wants to add their own bags.
-			System.out.println("Please add your own bags.");
+			//System.out.println("Please add your own bags.");
+			message = "Please add your own bags.";
 			
 			// 2. System: Indicates that the customer should add their own bags now.
 			Scanner input = new Scanner(System.in);
-			System.out.println("Have you added the bag(s)? (Y/N)");
-			String response = input.nextLine();
+			//System.out.println("Have you added the bag(s)? (Y/N)");
+			message = "Have you added the bag(s)? (Y/N)";
+//			String response = input.nextLine();
 			
 			// 3. Customer I/O: Signals that the customer has finished adding their own bags.
 			if (response.equalsIgnoreCase("Y")) {
@@ -404,29 +419,37 @@ public class SelfCheckoutMachineLogic{
 					// 6. System: Signals to the Attendant I/O the need to approve the added bags.
 					AttendantIO callAttendant = new AttendantIO();
 					callAttendant.informAttendant("Need approval for adding own bags");
-					System.out.println("Waiting for attendant approval");
+					//System.out.println("Waiting for attendant approval");
+					message = "Waiting for attendant approval";
 					
 					// 7. Attendant I/O: Signals approval of the added bags
 					Scanner attendantInput = new Scanner(System.in);
-					System.out.println("Approve customer bag? (Y/N)");
+					//System.out.println("Approve customer bag? (Y/N)");
+					message = "Approve customer bag? (Y/N)";
 					String attendantResponse = input.nextLine();
 					if (response.equalsIgnoreCase("Y")) {
 						// 8. System: Unblocks the self-checkout station.
 						selfCheckOutBlocked = false;
 						setMachineLock(selfCheckOutBlocked);
 						// 9. System: Signals to the Customer I/O that the customer may now continue.
-						System.out.println("You may continue with your checkout");
+						//System.out.println("You may continue with your checkout");
+						message = "You may continue with your checkout";
 					}
 					// Exception: The attendant does not want to approve the added bags
 					else if(response.equalsIgnoreCase("N")) {
-						System.out.println("Attendant did not approve the added bags. Please remove the items.");
+						//System.out.println("Attendant did not approve the added bags. Please remove the items.");
+						message = "Attendant did not approve the added bags. Please remove the items.";
 					}
 				}
 				// Exception: The System is not ready to note weight discrepancies
 				else {
-					System.out.println("Error: Weight not within acceptable range");
+					//System.out.println("Error: Weight not within acceptable range");
+					message = "Error: Weight not within acceptable range";
 				}
 			}
+		} else {
+			//System.out.println("Error: Weight not within acceptable range");
+			message = "Approve customer bag? (Y/N)";
 		}
 	}
 	
