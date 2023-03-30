@@ -102,7 +102,7 @@ public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, Coi
 					
 					dispensers[0] = dispenser5;
 					dispensers[1] = dispenser10;
-					dispensers[2] = dispenser50;
+					dispensers[2] = dispenser25;
 					dispensers[3] = dispenser100;
 					dispensers[4] = dispenser200;
 				
