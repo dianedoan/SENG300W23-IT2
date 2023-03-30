@@ -1,5 +1,3 @@
-
-
 package com.autovend.software;
 
 import java.math.BigDecimal;
@@ -14,6 +12,7 @@ import com.autovend.devices.AbstractDevice;
 import com.autovend.devices.CoinDispenser;
 import com.autovend.devices.CoinSlot;
 import com.autovend.devices.CoinStorage;
+import com.autovend.devices.CoinTray;
 import com.autovend.devices.CoinValidator;
 import com.autovend.devices.DisabledException;
 import com.autovend.devices.EmptyException;
@@ -25,13 +24,14 @@ import com.autovend.devices.observers.AbstractDeviceObserver;
 import com.autovend.devices.observers.CoinDispenserObserver;
 import com.autovend.devices.observers.CoinSlotObserver;
 import com.autovend.devices.observers.CoinStorageObserver;
+import com.autovend.devices.observers.CoinTrayObserver;
 import com.autovend.devices.observers.CoinValidatorObserver;
 
 public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, CoinDispenserObserver, CoinStorageObserver, CoinTrayObserver{
 	//private SelfCheckoutStation selfCheckoutStation = null
 	
 			// ArrayList keeping track of (the value of) the inserted coins
-			ArrayList<Integer> coinsList = new ArrayList<Integer>();
+			ArrayList<BigDecimal> coinsList = new ArrayList<BigDecimal>();
 			
 			private SelfCheckoutStation selfCheckoutStation;
 			private CoinSlot slot;
@@ -50,11 +50,19 @@ public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, Coi
 			private int[] coinsChange = new int[5];
 			private CoinDispenser[] dispensers = new CoinDispenser[5];
 			
+			//initialize coin dispensers:
+			private CoinDispenser dispenser5;
+			private CoinDispenser dispenser10;
+			private CoinDispenser dispenser25;
+			private CoinDispenser dispenser100;
+			private CoinDispenser dispenser200;
+			
+			
 			
 			// Total amount of cash inserted
-			double coinCount = 0;
+			int coinCount = 0;
 			
-			double remainingAmount;
+			BigDecimal remainingAmount;
 			
 			boolean inputCoin = false;
 			
@@ -94,17 +102,17 @@ public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, Coi
 					selfCheckoutStation.coinDispensers.get(200).register(this);
 					
 					// Initialize the five dispensers for each denomination being used in the machine
-					dispenser5 = selfCheckoutStation.coinDispensers.get(5);
-					dispenser10 = selfCheckoutStation.coinDispensers.get(10);
-					dispenser25 = selfCheckoutStation.coinDispensers.get(25);
-					dispenser100 = selfCheckoutStation.coinDispensers.get(100);
-					dispenser200 = selfCheckoutStation.coinDispensers.get(200);
+					this.dispenser5 = selfCheckoutStation.coinDispensers.get(5);
+					this.dispenser10 = selfCheckoutStation.coinDispensers.get(10);
+					this.dispenser25 = selfCheckoutStation.coinDispensers.get(25);
+					this.dispenser100 = selfCheckoutStation.coinDispensers.get(100);
+					this.dispenser200 = selfCheckoutStation.coinDispensers.get(200);
 					
-					dispensers[0] = dispenser5;
-					dispensers[1] = dispenser10;
-					dispensers[2] = dispenser25;
-					dispensers[3] = dispenser100;
-					dispensers[4] = dispenser200;
+					dispensers[0] = this.dispenser5;
+					dispensers[1] = this.dispenser10;
+					dispensers[2] = this.dispenser25;
+					dispensers[3] = this.dispenser100;
+					dispensers[4] = this.dispenser200;
 				
 			}
 			
@@ -113,14 +121,15 @@ public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, Coi
 				coin = new Coin(coin.getValue(), coin.getCurrency());
 				// The value of each coin that gets accepted (is valid) will be added to coinsList
 				remainingAmount = totalCoin;
-				while(selfCheckoutStation.billValidator.accept(coin)) {
+				while(selfCheckoutStation.coinValidator.accept(coin)) {
 					coinsList.add(coin.getValue());
-					for(Integer i : coinsList) {
+					for(BigDecimal i : coinsList) {
 						// updating the total amount
-						coinCount = coinCount + i;
+						coinCount = coinCount+ i.intValue();
 						
 						// Reduce the remaining amount due by the value of the inserted cash
-						remainingAmount = remainingAmount - coinCount;
+						
+						remainingAmount = remainingAmount.subtract(BigDecimal.valueOf(coinCount));
 						// signals to the customer I/O the updated amount due after the insertion of each coin.
 						customer.setAmount(remainingAmount);
 
@@ -132,22 +141,22 @@ public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, Coi
 			public boolean changeHandle() throws DisabledException, EmptyException, OverloadException {
 				
 				// check if the remaining amount is greater than zero
-				if(remainingAmount > 0) {
+				if(remainingAmount.intValue() > 0) {
 					// Return false as coin not fully paid and thus no change given
 					return false;
 				}
 				
 				// If the remaining amount is less than 0 the change has to be returned to the customer
-				else if (remainingAmount < 0) {
+				else if (remainingAmount.intValue() < 0) {
 					// signal to CASHIO the amount of change due
-					cash.getChange(remainingAmount);
-					this.cash.setChange(-remainingAmount);
+					cash.getChange();
+					this.cash.setChange(remainingAmount.negate());
 //					this.cash.setChange(Double.toString(-remainingAmount));
-					this.customer.setAmount(0);
+					this.customer.setAmount(BigDecimal.ZERO);
 					
 					if (checkChange()) {
 					//dispense the change to the customer
-					coinDispenser emitter;
+					CoinDispenser emitter;
 					for (int i = 0; i < coinsChange.length; i++) {
 						for (int j = 0; j < coinsChange[i]; j++) {
 							emitter = dispensers[i];
@@ -192,7 +201,7 @@ public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, Coi
 			public boolean checkChange() {
 				
 				// Get the amount of change, converted to integer as coins not yet supported
-				int changeDue = (int) this.cash.getChange();
+				int changeDue = this.cash.getChange().intValue();
 				
 				// Get the number of coins in each dispenser
 				int size5 = dispenser5.size();
@@ -202,12 +211,12 @@ public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, Coi
 				int size200 = dispenser200.size();
 				
 				// Check if all are empty, and if so notify listeners
-				if ((size5 + size10 + size20 + size50 + size100) == 0) {
-					this.reactToBillsEmptyEvent(dispenser5);
-					this.reactToBillsEmptyEvent(dispenser10);
-					this.reactToBillsEmptyEvent(dispenser20);
-					this.reactToBillsEmptyEvent(dispenser50);
-					this.reactToBillsEmptyEvent(dispenser100);
+				if ((size5 + size10 + size25 + size100 + size200) == 0) {
+					this.reactToCoinsEmptyEvent(dispenser5);
+					this.reactToCoinsEmptyEvent(dispenser10);
+					this.reactToCoinsEmptyEvent(dispenser25);
+					this.reactToCoinsEmptyEvent(dispenser100);
+					this.reactToCoinsEmptyEvent(dispenser200);
 				}
 				
 				// Calculate number of each coin denomination in decreasing order that can be given
@@ -225,11 +234,11 @@ public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, Coi
 				// Check if change due at the end equals zero
 				if (changeDue == 0) {
 					// If so, update the array for number of each bill to dispense and return true
-					billsChange[0] = change5;
-					billsChange[1] = change10;
-					billsChange[2] = change25;
-					billsChange[3] = change100;
-					billsChange[4] = change200;
+					coinsChange[0] = change5;
+					coinsChange[1] = change10;
+					coinsChange[2] = change25;
+					coinsChange[3] = change100;
+					coinsChange[4] = change200;
 					return true;
 				}
 				// If not, there are not enough bills or change cannot be made with just bills, return false
@@ -248,8 +257,6 @@ public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, Coi
 			}
 			
 			private boolean coinsLoadedEvent = false;
-			private boolean coinInsertedEvent = false;
-			
 			@Override
 			public void reactToEnabledEvent(AbstractDevice<? extends AbstractDeviceObserver> device) {
 				// TODO Auto-generated method stub
@@ -297,14 +304,14 @@ public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, Coi
 			@Override
 			public void reactToCoinsLoadedEvent(CoinDispenser dispenser, Coin... coins) {
 				
-				coinsLoadedEvent = True;
+				coinsLoadedEvent = true;
 				
 			}
 			
 			@Override
 			public void reactToCoinsUnloadedEvent(CoinDispenser dispenser, Coin... coins) {
 				
-				coinsLoadedEvent = False;
+				coinsLoadedEvent = false;
 				
 			}
 			
@@ -333,7 +340,6 @@ public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, Coi
 			// Implements methods from CoinSlotObserver
 			@Override 
 			public void reactToCoinInsertedEvent(CoinSlot slot) {
-				coinInsertedEvent = true;
 			}
 			
 			// Implements methods from CoinTrayObserver
@@ -346,7 +352,9 @@ public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, Coi
 			public boolean coinsLoadedEvent() {
 				return this.coinsLoadedEvent;
 			}
-			
+
+
+		
 			
 			
 			
