@@ -5,7 +5,10 @@ import static org.junit.Assert.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.Calendar;
 import java.util.Currency;
+import java.util.Date;
+import java.util.Locale;
 
 import org.junit.After;
 import org.junit.Before;
@@ -13,11 +16,15 @@ import org.junit.Test;
 
 import com.autovend.*;
 import com.autovend.devices.*;
+import com.autovend.external.CardIssuer;
 import com.autovend.software.*;
 
 public class PayWithCardTest {
 	private SelfCheckoutStation station;
 	private SelfCheckoutMachineLogic machineLogic;
+
+	static CardIssuer cardIssuer;
+	static Calendar expiry;
 
 	static Card credit_card;
 	static Card debit_card;
@@ -36,6 +43,17 @@ public class PayWithCardTest {
 		BigDecimal[] coinDenominations = {BigDecimal.valueOf(0.05), BigDecimal.valueOf(0.10), BigDecimal.valueOf(0.25)};
 		station = new SelfCheckoutStation(currency, billDenominations, coinDenominations, 10000, 5);
 		machineLogic = new SelfCheckoutMachineLogic(station);
+		
+		// initialize card issuer
+		cardIssuer = new CardIssuer("CIBC");
+		
+		// initialize card expire date
+		expiry = Calendar.getInstance();
+		expiry.set(Calendar.YEAR, 2030);
+		expiry.set(Calendar.MONTH, 10);
+		
+		cardIssuer.addCardData("123456", "Adam", expiry, "123", BigDecimal.valueOf(500));
+		cardIssuer.addCardData("012345", "Bob", expiry, "123", BigDecimal.valueOf(100));
 		
 		pin = "0000";
 		credit_card = new CreditCard("Mastercard", "1234567", "Adam", "123", pin, true, true);
@@ -61,7 +79,7 @@ public class PayWithCardTest {
 	}
 	
 	/**
-	 * Tests when a credit card is tapped more than four times.
+	 * Tests when a card is tapped four or more times.
 	 */
 	@Test
 	public void reachMaximumAttemptTap() throws IOException {
@@ -76,7 +94,7 @@ public class PayWithCardTest {
 	}
 	
 	/**
-	 * Tests when a credit card is swiped more than four times.
+	 * Tests when a card is swiped four or more times.
 	 */
 	@Test
 	public void reachMaximumAttemptSwipe() throws IOException {
@@ -91,7 +109,7 @@ public class PayWithCardTest {
 	}
 
 	/**
-	 * Tests when a credit card is inserted and removed more than four times. 
+	 * Tests when a card is inserted and removed four or more times. 
 	 */
 	@Test (expected = SimulationException.class)
 	public void reachMaximumAttemptInsert() throws IOException {
@@ -108,5 +126,29 @@ public class PayWithCardTest {
 		machineLogic.payWithCard();
 		station.cardReader.remove();
 	}
+
+	/**
+	 * Tests when a blocked card is tapped.
+	 */
+	@Test
+	public void blockedCardTap() throws IOException {
+		machineLogic.setTotal(new BigDecimal(100));
+		cardIssuer.block("123456");
+		station.cardReader.tap(credit_card);
+		machineLogic.payWithCard();
+		//assertTrue(machineLogic.getTotal(new BigDecimal(100)).compareTo(new BigDecimal(100)) == 0);
+	}
+	
+	/**
+	 * Tests when a card with insufficient funds is tapped.
+	 */
+	@Test
+	public void insufficientFundsCardTap() throws IOException {
+		machineLogic.setTotal(new BigDecimal(500));
+		station.cardReader.tap(credit_card);
+		machineLogic.payWithCard();
+		//assertTrue(machineLogic.getTotal(new BigDecimal(500)).compareTo(new BigDecimal(500)) == 0);
+	}
+	
 	
 }
