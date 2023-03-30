@@ -2,6 +2,7 @@ package com.autovend.software.test;
 
 import static org.junit.Assert.*;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Currency;
 
@@ -55,9 +56,17 @@ public class PayWithCardTest {
 	 * Tests when a credit card is attempted once to pay.
 	 */
 	@Test
-	public void payWithCreditCard() {
+	public void reachMaximumAttempt() throws IOException {
+		station.cardReader.enable();
+		station.cardReader.tap(credit_card);
 		machineLogic.payWithCard();
-		
+		station.cardReader.tap(credit_card);
+		machineLogic.payWithCard();
+		station.cardReader.tap(credit_card);
+		machineLogic.payWithCard();
+		station.cardReader.tap(credit_card);
+		machineLogic.payWithCard();
+
 	}
 
 }

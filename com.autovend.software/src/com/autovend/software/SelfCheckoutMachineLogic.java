@@ -391,18 +391,19 @@ public class SelfCheckoutMachineLogic{
 	}
 	public void payWithCard(){
 		int holdNum;
-		do{
-			if (attempt > 3){
-				bank.block(cardData.getNumber());
-				System.out.println("Maximum attempts have been reached, try to contact with the bank");
-				return;
-			}
-			holdNum = bank.authorizeHold(cardData.getNumber(), total);
-			attempt++;
-		}while (holdNum==-1);
-		attempt =1;
+		if (attempt > 3){
+			bank.block(cardData.getNumber());
+			System.out.println("Maximum attempts have been reached, try to contact with the bank");
+			return;
+		}
+		holdNum = bank.authorizeHold(cardData.getNumber(), total);
+		attempt++;
+		if (holdNum!=-1){
+			attempt =1;
+		}
 		if (holdNum == -1) {
 			System.out.println("The card could be blocked or not insufficient balance!");
+			return;
 		} else {
 			System.out.println("Hold number: " + holdNum);
 			boolean releaseHoldStatus = bank.releaseHold(cardData.getNumber(), holdNum);
