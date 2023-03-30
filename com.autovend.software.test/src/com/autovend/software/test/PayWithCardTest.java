@@ -18,6 +18,10 @@ import com.autovend.software.*;
 public class PayWithCardTest {
 	private SelfCheckoutStation station;
 	private SelfCheckoutMachineLogic machineLogic;
+
+	static Card credit_card;
+	static Card debit_card;
+	
 	
 	/**
 	 * Set up before each test.
@@ -29,6 +33,9 @@ public class PayWithCardTest {
 		BigDecimal[] coinDenominations = {BigDecimal.valueOf(0.05), BigDecimal.valueOf(0.10), BigDecimal.valueOf(0.25)};
 		station = new SelfCheckoutStation(currency, billDenominations, coinDenominations, 10000, 5);
 		machineLogic = new SelfCheckoutMachineLogic(station);
+		
+		credit_card = new CreditCard("Mastercard", "1234567", "Adam", "123", "0000", true, true);
+		debit_card = new DebitCard("VISA", "1234567", "Bob", "123", "0000", true, true);
 	}
 
 	/**
@@ -37,16 +44,20 @@ public class PayWithCardTest {
 	@After
 	public void tearDown() {
 		station = null;
-		machineLogic = null;	
+		machineLogic = null;
+		
+		credit_card = null;
+		debit_card = null;
 	}
 
 	
 	/**
-	 * Tests when ...
+	 * Tests when a credit card is attempted once to pay.
 	 */
 	@Test
-	public void test() {
-		fail("Not yet implemented");
+	public void payWithCreditCard() {
+		machineLogic.payWithCard();
+		
 	}
 
 }
