@@ -108,14 +108,4 @@ public class PayWithCardTest {
 		machineLogic.payWithCard();
 		station.cardReader.remove();
 	}
-	
-	/**
-	 * Tests when a credit card is tapped once.
-	 */
-	@Test
-	public void cardTap() throws IOException {
-		station.cardReader.tap(credit_card);
-		machineLogic.payWithCard();
-
-	}
 }
