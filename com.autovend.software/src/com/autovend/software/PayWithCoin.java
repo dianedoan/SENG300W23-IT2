@@ -18,6 +18,7 @@ import com.autovend.devices.CoinValidator;
 import com.autovend.devices.DisabledException;
 import com.autovend.devices.EmptyException;
 import com.autovend.devices.OverloadException;
+import com.autovend.devices.ReceiptPrinter;
 import com.autovend.devices.SelfCheckoutStation;
 import com.autovend.devices.SimulationException;
 import com.autovend.devices.observers.AbstractDeviceObserver;
@@ -43,7 +44,7 @@ public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, Coi
 			private AttendantIO attendant;
 			private CashIO cash;
 			private ReceiptPrinter printer;
-			private string message;
+			private String message;
 			
 			// Array of the number of each coin denomination to dispense for change
 			private int[] coinsChange = new int[5];
