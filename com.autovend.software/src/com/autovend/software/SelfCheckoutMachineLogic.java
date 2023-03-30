@@ -457,11 +457,11 @@ public class SelfCheckoutMachineLogic{
 	}
 	
 	public void Purchase_bags(int number_bags) {
-		CustomerDisplayIO.informCustomer("You want to purchase"+Double.valueOf(number_bags)+"\n bags");
+		customerDisplay.informCustomer("You want to purchase"+Integer.valueOf(number_bags)+" bags");
 		
 		addItemPerUnit(bag, number_bags);
 		weightChanged(number_bags);
-		CustomerDisplayIO.informCustomer("The operation is complete");
+		customerDisplay.informCustomer("The operation is complete");
 		
 		
 	}
