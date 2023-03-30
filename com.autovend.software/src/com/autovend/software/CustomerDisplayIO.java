@@ -39,24 +39,30 @@ public class CustomerDisplayIO {
 	
 	public int getMembershipNumber() throws IllegalArgumentException{
 		try {
-		Scanner customer_input = new Scanner(System.in);
-		System.out.println("Please enter membership number:");
-		String mn = customer_input.nextLine();
-		if(mn.equals("cancel")) {
-			return 0;
-		}else {
-		int membershipNumber = Integer.parseInt(mn);
-		return membershipNumber;
-		}}catch(IllegalArgumentException e) {
+			Scanner customer_input = new Scanner(System.in);
+			System.out.println("Please enter membership number:");
+			String mn = customer_input.nextLine();
+			if(mn.equals("cancel")) {
+				return 0;
+			}else {
+				int membershipNumber = Integer.parseInt(mn);
+				return membershipNumber;
+			}
+		}catch(IllegalArgumentException e) {
 			System.out.println("Enter proper membership number.");
 		}
+		
 
 		
 		
 	}
+
+//<<<<<<< HEAD
 	
 	
 	
 	
+=======
+//>>>>>>> branch 'main' of https://github.com/dianedoan/SENG300W23-IT2.git
 
 }
