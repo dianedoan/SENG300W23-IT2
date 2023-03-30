@@ -1,12 +1,3 @@
-/*
- *  @author: Angeline Tran (301369846),
- *  @author: Tyson Hartley (30117135), 
- *  @author: Jeongah Lee (30137463), 
- *  @author: Tyler Nguyen (30158563), 
- *  @author: Diane Doan (30052326), 
- *  @author: Nusyba Shifa (30162709)
- */
-
 package com.autovend.software;
 
 import com.autovend.devices.AbstractDevice;

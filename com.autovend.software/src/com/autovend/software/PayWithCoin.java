@@ -18,7 +18,6 @@ import com.autovend.devices.CoinValidator;
 import com.autovend.devices.DisabledException;
 import com.autovend.devices.EmptyException;
 import com.autovend.devices.OverloadException;
-import com.autovend.devices.ReceiptPrinter;
 import com.autovend.devices.SelfCheckoutStation;
 import com.autovend.devices.SimulationException;
 import com.autovend.devices.observers.AbstractDeviceObserver;
