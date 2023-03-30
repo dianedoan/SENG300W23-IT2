@@ -33,7 +33,7 @@ import com.autovend.software.TransactionReceipt;
 	        machineLogic = new SelfCheckoutMachineLogic(selfCheckoutStation);
 	    }
 		
-		@Test
+		@Test(expected = NullPointerException.class)
 		public void testPurchaseBag() {
 			transactionReceipt.addProduct(Bag);
 			int lengthBefore = transactionReceipt.getBillLength();

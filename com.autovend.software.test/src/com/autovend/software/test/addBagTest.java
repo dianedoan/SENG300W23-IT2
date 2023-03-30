@@ -37,7 +37,7 @@ import com.autovend.software.TransactionReceipt;
         machineLogic = new SelfCheckoutMachineLogic(selfCheckoutStation);
     }
 
-    //@Test
+    @Test
     public void testAddOwnBags() {
         // Test with the bag weight less than the allowed limit
     	Numeral[] code = {Numeral.one, Numeral.five, Numeral.three, Numeral.four};
@@ -57,7 +57,7 @@ import com.autovend.software.TransactionReceipt;
         
     }
     
-    //@Test
+    @Test
     public void testAddOwnBags1() throws OverloadException {
       // 1. Customer I/O: Signals that the customer wants to add their own bags.
       // 2. System: Indicates that the customer should add their own bags now.
@@ -65,88 +65,60 @@ import com.autovend.software.TransactionReceipt;
       // simulate customer adding bags and confirming with 'Y' response
       String response = "Y";
       assertEquals(response, "Y");
-      
-      // 4. Bagging Area: Signals to the System the weight change.
       // simulate weight change of 0.5 kg
       
-      machineLogic.weightChanged(0.5);
-      double expectedWeightChange = 0.0;
       ElectronicScale electronicScale = new ElectronicScale(100, 1);
+  	  machineLogic.esObserver.reactToWeightChangedEvent(electronicScale, Double.valueOf(0.5));
+      double expectedWeightChange = 0.0;
       double actualWeightChange = electronicScale.getCurrentWeight();
       assertEquals(expectedWeightChange, actualWeightChange, 0.0);
       
-      // 5. System: Blocks the self-checkout station from further customer actions.
       boolean expectedSelfCheckoutBlocked = true;
       machineLogic.setMachineLock(expectedSelfCheckoutBlocked);
       boolean actualSelfCheckoutBlocked = machineLogic.machineLocked;
       assertEquals(expectedSelfCheckoutBlocked, actualSelfCheckoutBlocked);
       
-      // 6. System: Signals to the Attendant I/O the need to approve the added bags.
-      // simulate calling the attendant for approval
       machineLogic.attendant.informAttendant("Need approval for adding own bags");
       String expectedAttendantMessage = "Need approval for adding own bags";
       String actualAttendantMessage = machineLogic.attendant.getMostRecentMessage();
       assertEquals(expectedAttendantMessage, actualAttendantMessage);
       
-      // 7. Attendant I/O: Signals approval of the added bags
-      // simulate attendant approving bags with 'Y' response
       String attendantResponse = "Y";
       assertEquals(attendantResponse, "Y");
       
-      // 8. System: Unblocks the self-checkout station.
       expectedSelfCheckoutBlocked = false;
       machineLogic.setMachineLock(expectedSelfCheckoutBlocked);
       actualSelfCheckoutBlocked = machineLogic.machineLocked;
       assertEquals(expectedSelfCheckoutBlocked, actualSelfCheckoutBlocked);
       
-      // 9. System: Signals to the Customer I/O that the customer may now continue.
-      // simulate system signaling to customer that they can continue
-      // (no assertion needed since it's just a print statement)
-      
-    }
-    
-    private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
-    private final PrintStream originalOut = System.out;
-    
-    @After
-    public void restoreStreams() {
-        System.setOut(originalOut);
-    }
-
-    //@Test
-    public void testAddBags() throws OverloadException {
-
-    	String message = "";
-        // Call the method that prints to System.out
-    	machineLogic.addOwnBags();
-    	
-        // Get the printed output as a string
-        String printedOutput = outContent.toString();
-
-        // Assert that the output is what you expect
-        assertEquals("", printedOutput.trim());
-    }
-    
-    //@Test
-    public void testAddBags1() throws OverloadException {
-
-    	String response = "Y"; 
-        // Call the method that prints to System.out
-    	machineLogic.addOwnBags();
-    	
-        // Get the printed output as a string
-        String printedOutput = outContent.toString();
-
-        // Assert that the output is what you expect
-        assertEquals("", printedOutput.trim());
     }
 
     @Test
     public void testAddBags2() throws OverloadException {
 
-//    	String message = "";
-        // Call the method that prints to System.out
     	machineLogic.setResponse("Y");
+    	machineLogic.addOwnBags();
+    	
+    	String expected = "Error: Weight not within acceptable range";
+    	assertEquals(expected, machineLogic.message);
+    }
+    
+    @Test
+    public void testAddBags3() throws OverloadException {
+
+    	machineLogic.setResponse("N");
+    	machineLogic.addOwnBags();
+    	
+    	String expected = "Have you added the bag(s)? (Y/N)";
+    	assertEquals(expected, machineLogic.message);
+    }
+    
+    @Test
+    public void testAddBags4() throws OverloadException {
+
+    	machineLogic.setResponse("Y");
+    	ElectronicScale electronicScale = new ElectronicScale(100, 1);
+    	machineLogic.esObserver.reactToWeightChangedEvent(electronicScale, 10.0);
     	machineLogic.addOwnBags();
     	
     	String expected = "Error: Weight not within acceptable range";
