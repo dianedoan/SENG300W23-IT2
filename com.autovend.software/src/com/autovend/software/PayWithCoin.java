@@ -1,6 +1,8 @@
 package com.autovend.software;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Currency;
@@ -31,23 +33,23 @@ public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, Coi
 	//private SelfCheckoutStation selfCheckoutStation = null
 	
 			// ArrayList keeping track of (the value of) the inserted coins
-			ArrayList<BigDecimal> coinsList = new ArrayList<BigDecimal>();
+			public ArrayList<BigDecimal> coinsList = new ArrayList<BigDecimal>();
 			
 			private SelfCheckoutStation selfCheckoutStation;
 			private CoinSlot slot;
 			private CoinValidator validator;
-			private Coin coin;
+			public Coin coin;
 			private CoinDispenser dispenser;
 			private BigDecimal totalCoin; // create local variable total
 			
 			private CustomerIO customer;
 			private AttendantIO attendant;
-			private CashIO cash;
+			public CashIO cash;
 			private ReceiptPrinter printer;
 			private String message;
 			
 			// Array of the number of each coin denomination to dispense for change
-			private int[] coinsChange = new int[5];
+			private double[] coinsChange = new double[5];
 			private CoinDispenser[] dispensers = new CoinDispenser[5];
 			
 			//initialize coin dispensers:
@@ -60,7 +62,7 @@ public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, Coi
 			
 			
 			// Total amount of cash inserted
-			int coinCount = 0;
+			double coinCount = 0;
 			
 			BigDecimal remainingAmount;
 			
@@ -78,35 +80,36 @@ public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, Coi
 			/*
 			 * Getter for total
 			 */
-			public BigDecimal getTotal(BigDecimal total) {
+			public BigDecimal getTotal() {
 				return this.totalCoin;
 			}
 			
 
 			public PayWithCoin(SelfCheckoutStation selfCheckoutStation, CustomerIO customer) throws DisabledException, OverloadException{
 				
-				 inputCoin = selfCheckoutStation.coinSlot.accept(coin);
-				 	
+				 	//inputCoin = selfCheckoutStation.coinSlot.accept(coin);
+					
+				 	this.selfCheckoutStation = selfCheckoutStation;
 				 	customer = new CustomerIO();
-				 	remainingAmount = this.customer.getAmount();
+				 	//remainingAmount = this.customer.getAmount();
 					
 					attendant = new AttendantIO();
 					cash = new CashIO();
 
 					selfCheckoutStation.coinValidator.register(this);
 					selfCheckoutStation.coinSlot.register(this);
-					selfCheckoutStation.coinDispensers.get(5).register(this);
-					selfCheckoutStation.coinDispensers.get(10).register(this);
-					selfCheckoutStation.coinDispensers.get(25).register(this);
-					selfCheckoutStation.coinDispensers.get(100).register(this);
-					selfCheckoutStation.coinDispensers.get(200).register(this);
+					selfCheckoutStation.coinDispensers.get(BigDecimal.valueOf(0.05)).register(this);
+					selfCheckoutStation.coinDispensers.get(BigDecimal.valueOf(0.10)).register(this);
+					selfCheckoutStation.coinDispensers.get(BigDecimal.valueOf(0.25)).register(this);
+					selfCheckoutStation.coinDispensers.get(BigDecimal.valueOf(1.00)).register(this);
+					selfCheckoutStation.coinDispensers.get(BigDecimal.valueOf(2.00)).register(this);
 					
 					// Initialize the five dispensers for each denomination being used in the machine
-					this.dispenser5 = selfCheckoutStation.coinDispensers.get(5);
-					this.dispenser10 = selfCheckoutStation.coinDispensers.get(10);
-					this.dispenser25 = selfCheckoutStation.coinDispensers.get(25);
-					this.dispenser100 = selfCheckoutStation.coinDispensers.get(100);
-					this.dispenser200 = selfCheckoutStation.coinDispensers.get(200);
+					this.dispenser5 = selfCheckoutStation.coinDispensers.get(BigDecimal.valueOf(0.05));
+					this.dispenser10 = selfCheckoutStation.coinDispensers.get(BigDecimal.valueOf(0.10));
+					this.dispenser25 = selfCheckoutStation.coinDispensers.get(BigDecimal.valueOf(0.25));
+					this.dispenser100 = selfCheckoutStation.coinDispensers.get(BigDecimal.valueOf(1.00));
+					this.dispenser200 = selfCheckoutStation.coinDispensers.get(BigDecimal.valueOf(2.00));
 					
 					dispensers[0] = this.dispenser5;
 					dispensers[1] = this.dispenser10;
@@ -118,22 +121,24 @@ public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, Coi
 			
 			public void coinValidate(SelfCheckoutStation selfCheckoutStation, CustomerIO customer) throws DisabledException{
 				
-				coin = new Coin(coin.getValue(), coin.getCurrency());
-				// The value of each coin that gets accepted (is valid) will be added to coinsList
-				remainingAmount = totalCoin;
-				while(selfCheckoutStation.coinValidator.accept(coin)) {
+				if(selfCheckoutStation.coinValidator.accept(coin)) {
 					coinsList.add(coin.getValue());
 					for(BigDecimal i : coinsList) {
 						// updating the total amount
-						coinCount = coinCount+ i.intValue();
+						coinCount += i.doubleValue();
+						}
 						
 						// Reduce the remaining amount due by the value of the inserted cash
+				
+						this.remainingAmount = totalCoin.subtract(BigDecimal.valueOf(coinCount));
+						this.remainingAmount = remainingAmount.setScale(2, RoundingMode.HALF_UP);
+						//System.out.println(BigDecimal.valueOf(coinCount));
 						
-						remainingAmount = remainingAmount.subtract(BigDecimal.valueOf(coinCount));
 						// signals to the customer I/O the updated amount due after the insertion of each coin.
-						customer.setAmount(remainingAmount);
+						customer.setAmount(this.remainingAmount);
+						
 
-					}
+					
 					
 				}
 			}
@@ -150,7 +155,7 @@ public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, Coi
 				else if (remainingAmount.intValue() < 0) {
 					// signal to CASHIO the amount of change due
 					cash.getChange();
-					this.cash.setChange(remainingAmount.negate());
+					this.cash.setChange(remainingAmount);
 //					this.cash.setChange(Double.toString(-remainingAmount));
 					this.customer.setAmount(BigDecimal.ZERO);
 					
@@ -188,20 +193,15 @@ public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, Coi
 			 * When the attendant is called the system has to be blocked from any further transactions
 			 */
 			public void suspendSystem() {
-				selfCheckoutStation.mainScanner.disable();
-				selfCheckoutStation.handheldScanner.disable();
-				selfCheckoutStation.scale.disable();
-				selfCheckoutStation.printer.disable();
-				selfCheckoutStation.billInput.disable();
-				selfCheckoutStation.billOutput.disable();
-				selfCheckoutStation.billStorage.disable();
-				selfCheckoutStation.billValidator.disable();
+				selfCheckoutStation.coinSlot.disable();
+				selfCheckoutStation.coinStorage.disable();
+				selfCheckoutStation.coinValidator.disable();
 			}
 			
 			public boolean checkChange() {
 				
 				// Get the amount of change, converted to integer as coins not yet supported
-				int changeDue = this.cash.getChange().intValue();
+				double changeDue = this.cash.getChange().doubleValue();
 				
 				// Get the number of coins in each dispenser
 				int size5 = dispenser5.size();
@@ -220,15 +220,15 @@ public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, Coi
 				}
 				
 				// Calculate number of each coin denomination in decreasing order that can be given
-				int change200 = Math.min((changeDue / 200),size200);
+				double change200 = Math.min((changeDue / 200),size200);
 				changeDue -= (change200 * 200);
-				int change100 = Math.min((changeDue / 100),size100);
+				double change100 = Math.min((changeDue / 100),size100);
 				changeDue -= (change100 * 100);
-				int change25 = Math.min((changeDue / 25),size25);
+				double change25 = Math.min((changeDue / 25),size25);
 				changeDue -= (change25 * 25);
-				int change10 = Math.min((changeDue / 10),size10);
+				double change10 = Math.min((changeDue / 10),size10);
 				changeDue -= (change10 * 10);
-				int change5 = Math.min((changeDue / 5),size5);
+				double change5 = Math.min((changeDue / 5),size5);
 				changeDue -= (change5 * 5);
 				
 				// Check if change due at the end equals zero
@@ -252,7 +252,7 @@ public class PayWithCoin implements CoinSlotObserver, CoinValidatorObserver, Coi
 			 * Getter to retrieve information for testing on which bills dispensed as change
 			 * @return billsChange array of number of each bill given as change
 			 */
-			public int[]  getCoinsChange() {
+			public double[]  getCoinsChange() {
 				return coinsChange;
 			}
 			
