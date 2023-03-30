@@ -595,17 +595,12 @@ public class SelfCheckoutMachineLogic{
 		if (holdNum == -1) {
 			System.out.println("The card could be blocked or insufficient balance!");
 			return;
-		} else {
+		} 
+		else {
 			System.out.println("Hold number: " + holdNum);
-			boolean releaseHoldStatus = bank.releaseHold(cardData.getNumber(), holdNum);
-			if (releaseHoldStatus){
-				boolean postTransactionStatus = bank.postTransaction(cardData.getNumber(), holdNum, total);
-				if (postTransactionStatus){
+			boolean postTransactionStatus = bank.postTransaction(cardData.getNumber(), holdNum, total);
+			if (postTransactionStatus){
 					customerIO.setAmount(BigDecimal.valueOf(0));
-				}
-				else {
-					System.out.println("The card could be blocked or insufficient balance!");
-				}
 			}
 			else {
 				System.out.println("The card could be blocked or insufficient balance!");
