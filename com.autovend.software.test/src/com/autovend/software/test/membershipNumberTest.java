@@ -7,8 +7,6 @@ import java.util.Scanner;
 import static org.junit.Assert.*;
 public class membershipNumberTest {
 
-
-    public class MembershipTest {
         @Test
         public void testParseMembershipNumberValid() {
             CustomerDisplayIO membership = new CustomerDisplayIO();
@@ -35,4 +33,4 @@ public class membershipNumberTest {
             membership.parseMembershipNumber("");
         }
     }
-}
+
