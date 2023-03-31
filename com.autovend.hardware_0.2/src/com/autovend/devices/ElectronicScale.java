@@ -12,7 +12,7 @@ public class ElectronicScale extends AbstractDevice<ElectronicScaleObserver> {
 	private static final long serialVersionUID = 8457320342496912417L;
 	private ArrayList<SellableUnit> items = new ArrayList<>();
 	private double weightLimitInGrams;
-	private double currentWeightInGrams = 0;
+	public double currentWeightInGrams = 0;
 	private double weightAtLastEvent = 0;
 	private double sensitivity;
 
