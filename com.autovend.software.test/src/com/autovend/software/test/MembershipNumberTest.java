@@ -17,7 +17,7 @@ package com.autovend.software.test;
 import org.junit.Test;
 
 import com.autovend.software.*;
-import java.util.Scanner;
+
 import static org.junit.Assert.*;
 public class membershipNumberTest {
 

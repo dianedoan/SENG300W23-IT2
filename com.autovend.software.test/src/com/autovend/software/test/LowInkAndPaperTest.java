@@ -16,7 +16,6 @@ package com.autovend.software.test;
 
 import static org.junit.Assert.*;
 import java.math.BigDecimal;
-import java.util.Calendar;
 import java.util.Currency;
 
 import org.junit.After;
