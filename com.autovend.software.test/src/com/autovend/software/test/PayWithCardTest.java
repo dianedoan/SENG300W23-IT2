@@ -45,20 +45,21 @@ public class PayWithCardTest {
 		machineLogic = new SelfCheckoutMachineLogic(station);
 		
 		// initialize card issuer
-		cardIssuer = new CardIssuer("CIBC");
+		cardIssuer = new CardIssuer("RBC");
 		
 		// initialize card expire date
 		expiry = Calendar.getInstance();
 		expiry.set(Calendar.YEAR, 2030);
 		expiry.set(Calendar.MONTH, 10);
 		
+		// add cards to database
 		cardIssuer.addCardData("123456", "Adam", expiry, "123", BigDecimal.valueOf(500));
 		cardIssuer.addCardData("012345", "Bob", expiry, "123", BigDecimal.valueOf(100));
 		
+		// initialize cards
 		pin = "0000";
-		credit_card = new CreditCard("Mastercard", "1234567", "Adam", "123", pin, true, true);
-		debit_card = new DebitCard("VISA", "1234567", "Bob", "123", pin, true, true);
-		
+		credit_card = new CreditCard("Mastercard", "123456", "Adam", "123", pin, true, true);
+		debit_card = new DebitCard("VISA", "0123456", "Bob", "123", pin, true, true);
 		signature = new BufferedImage(24, 24, 13);
 		
 		station.cardReader.enable();
@@ -128,27 +129,34 @@ public class PayWithCardTest {
 	}
 
 	/**
-	 * Tests when a blocked card is tapped.
+	 * Tests when a card is tapped once.
 	 */
 	@Test
-	public void blockedCardTap() throws IOException {
-		machineLogic.setTotal(new BigDecimal(100));
-		cardIssuer.block("123456");
+	public void CardTap() throws IOException {
+		machineLogic.bank = cardIssuer;
 		station.cardReader.tap(credit_card);
-		machineLogic.payWithCard();
-		//assertTrue(machineLogic.getTotal(new BigDecimal(100)).compareTo(new BigDecimal(100)) == 0);
+		machineLogic.payWithCard();	
 	}
 	
 	/**
-	 * Tests when a card with insufficient funds is tapped.
+	 * Tests when a card is swiped once.
 	 */
 	@Test
-	public void insufficientFundsCardTap() throws IOException {
-		machineLogic.setTotal(new BigDecimal(500));
-		station.cardReader.tap(credit_card);
+	public void CardSwipe() throws IOException {
+		machineLogic.bank = cardIssuer;
+		station.cardReader.swipe(credit_card, signature);
 		machineLogic.payWithCard();
-		//assertTrue(machineLogic.getTotal(new BigDecimal(500)).compareTo(new BigDecimal(500)) == 0);
 	}
 	
+	/**
+	 * Tests when a card is inserted once and removed.
+	 */
+	@Test (expected = SimulationException.class)
+	public void CardInsert() throws IOException {
+		machineLogic.bank = cardIssuer;
+		station.cardReader.insert(credit_card, pin);
+		machineLogic.payWithCard();
+		station.cardReader.remove();
+	}
 	
 }
