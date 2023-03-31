@@ -110,6 +110,8 @@ public class SelfCheckoutMachineLogic{
 	 * Constructor for Adding observers to pieces of hardware
 	 */
 	public SelfCheckoutMachineLogic(SelfCheckoutStation scStation) {
+		
+		this.station = scStation;
 		listOfLockCodes = new int[numberOfLockCodes];
 		for(int i = 0; i < this.numberOfLockCodes; i++) {
 			listOfLockCodes[i] = i-1;
