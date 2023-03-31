@@ -1,4 +1,4 @@
-package com.autovend.software;
+package src.com.autovend.software;
 
 import com.autovend.Barcode;
 import com.autovend.devices.AbstractDevice;

@@ -1,4 +1,4 @@
-package com.autovend.software;
+package src.com.autovend.software;
 
 /*
  * Simulates sending messages to the customer's display and keeping track of the most recent message.

@@ -1,4 +1,4 @@
-package com.autovend.software;
+package src.com.autovend.software;
 
 import java.math.BigDecimal;
 
