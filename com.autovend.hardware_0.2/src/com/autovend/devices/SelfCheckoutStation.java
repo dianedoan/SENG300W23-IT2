@@ -98,7 +98,7 @@ public class SelfCheckoutStation {
 	/**
 	 * The electronic scale in the bagging area.
 	 */
-	public final ElectronicScale baggingArea;
+	public ElectronicScale baggingArea;
 
 	/**
 	 * The printer.
@@ -327,4 +327,9 @@ public class SelfCheckoutStation {
 		UnidirectionalChannel<Coin> cc = new UnidirectionalChannel<Coin>(tray);
 		dispenser.connect(cc);
 	}
+	
+	public void setBaggingArea(ElectronicScale scale) {
+		this.baggingArea = scale;
+	}
 }
+

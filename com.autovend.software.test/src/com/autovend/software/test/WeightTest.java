@@ -16,25 +16,21 @@ package com.autovend.software.test;
 
 import java.math.BigDecimal;
 import java.util.Currency;
-import java.util.HashMap;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.autovend.Barcode;
-import com.autovend.BarcodedUnit;
 import com.autovend.Numeral;
+import com.autovend.devices.ElectronicScale;
 import com.autovend.devices.OverloadException;
 import com.autovend.devices.SelfCheckoutStation;
-import com.autovend.products.BarcodedProduct;
 import com.autovend.external.ProductDatabases;
+import com.autovend.products.BarcodedProduct;
 import com.autovend.software.SelfCheckoutMachineLogic;
 
-
-
-public class AddItemTest {
-	
+public class WeightTest {
 	Currency currency = Currency.getInstance("CAD");
 	int[] billDenominations = {5, 10, 20, 50, 100};
 	BigDecimal[] coinDenominations = {BigDecimal.TEN};
@@ -66,6 +62,10 @@ public class AddItemTest {
     
     SelfCheckoutMachineLogic testLogic = new SelfCheckoutMachineLogic (station);
     
+    ElectronicScale scale = new ElectronicScale(50, sensitivity);
+    
+  
+    
     
 
 	 
@@ -77,31 +77,29 @@ public class AddItemTest {
     	  
     	  ProductDatabases.BARCODED_PRODUCT_DATABASE.put(testBarcode2, testProduct2);
     	  ProductDatabases.INVENTORY.put(testProduct2, 0);
+    	  
+    	  station.setBaggingArea(scale);
+    	  station.baggingArea.currentWeightInGrams = 10;
+    	  
     }
     
+    @Test
+	 public void noDisc() throws OverloadException {
+		 boolean scan1 = testLogic.addItemScan(testBarcode);
+		 Assert.assertEquals(true, scan1);
+		 testLogic.totalExpectedWeight = 10.00;
+		 boolean actual = testLogic.weightDiscrepancy();
+		 Assert.assertEquals(false, actual);
+	 }
+    
+    @Test
+	 public void Disc() throws OverloadException {
+		 boolean scan1 = testLogic.addItemScan(testBarcode2);
+		 testLogic.totalExpectedWeight = 30.00;
+		 boolean actual = testLogic.weightDiscrepancy();
+		 Assert.assertEquals(true, actual);
+	 }
+    
+    
 
-	 @Test(expected = NullPointerException.class)
-	 
-	 public void BarcodeIsNull() throws OverloadException {	 
-	 boolean scan1 = testLogic.addItemScan(null); 
-	 }
-	 
-	 @Test
-	 public void BarcodeNotNull() {
-		 boolean scan2 = testLogic.addItemScan(testBarcode);
-		 Assert.assertEquals(true, scan2);
-	 }
-	 
-	 @Test()
-	 public void ItemUnavailable() {
-		 boolean scan3 = testLogic.addItemScan(testBarcode2);
-		 Assert.assertEquals(false, scan3);
-		 
 }
-	 @Test()
-	 public void ItemNotInDataBase() {
-		 boolean scan4 = testLogic.addItemScan(testBarcode3);
-		 Assert.assertEquals(false, scan4);
-	 }
-	 }
-

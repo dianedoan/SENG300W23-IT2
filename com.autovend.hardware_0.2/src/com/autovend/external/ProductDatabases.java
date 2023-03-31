@@ -17,7 +17,7 @@ public class ProductDatabases {
 	/**
 	 * Instances of this class are not needed, so the constructor is private.
 	 */
-	private ProductDatabases() {}
+	//private ProductDatabases() {}
 	
 	/**
 	 * The known PLU-coded products, indexed by PLU code.

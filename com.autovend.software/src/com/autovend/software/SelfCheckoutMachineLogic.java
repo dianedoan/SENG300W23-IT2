@@ -1,3 +1,17 @@
+/**
+ * @author: Abigia Debebe (30134608),
+ * @author: Akib Hasan Aryan (30141456),
+ * @author: Andy Tran (30125341),
+ * @author: Delaram Bahreini Esfahani (30133864),
+ * @author: Diane Doan (30052326),
+ * @author: Faiyaz Altaf Pranto (30162576),
+ * @author: Ishita Chandra (30159580),
+ * @author: Nam Nguyen Vu (30154892),
+ * @author: River Sanoy (30129508),
+ * @author: Ryan Haoping Zheng (30072318),
+ * @author: Xinzhou Li (30066080)
+ */
+
 package com.autovend.software;
 
 import java.math.BigDecimal;
@@ -35,7 +49,7 @@ public class SelfCheckoutMachineLogic{
 	public BigDecimal total; // create local variable total
 	public BigDecimal remainder; // create local variable remainder
 	public BigDecimal change; // create local variable change
-	public BigDecimal totalExpectedWeight;
+	public double totalExpectedWeight;
 	public boolean billInsertedEvent = false;
 	public boolean billValidEvent = false;
 	
@@ -112,6 +126,7 @@ public class SelfCheckoutMachineLogic{
 	public SelfCheckoutMachineLogic(SelfCheckoutStation scStation) {
 		
 		this.station = scStation;
+		this.station.baggingArea = scStation.baggingArea;
 		listOfLockCodes = new int[numberOfLockCodes];
 		for(int i = 0; i < this.numberOfLockCodes; i++) {
 			listOfLockCodes[i] = i-1;
@@ -562,18 +577,24 @@ public class SelfCheckoutMachineLogic{
 	public boolean weightDiscrepancy() throws OverloadException{
 		//Loops through array list containing all scanned items and adds their expected weight to the total expected weight
 		for(int i = 0; i < this.scannedItems.size(); i++) {
-			this.totalExpectedWeight = this.totalExpectedWeight.add(BigDecimal.valueOf(this.scannedItems.get(i).getWeight()));
+			//this.totalExpectedWeight = this.totalExpectedWeight + this.scannedItems.get(i).getWeight();
+			this.totalExpectedWeight = this.scannedItems.get(i).getWeight();
 		}
 
 		//Loops through array list containing all plu added items and adds their expected weight to the total expected weight
 		for(int i = 0; i < this.pluItems.size(); i++) {
-			this.totalExpectedWeight = this.totalExpectedWeight.add(BigDecimal.valueOf(this.pluItems.get(i).getWeight()));
+			this.totalExpectedWeight = this.totalExpectedWeight + this.pluItems.get(i).getWeight();
 		}
 
 		//Gets the current weight on the station's bagging area
 		double currentWeight = this.station.baggingArea.getCurrentWeight();
+		System.out.println(this.totalExpectedWeight);
+		System.out.println(currentWeight);
 		//total expected weight must match the total weight on bagging area
-		if(this.totalExpectedWeight != BigDecimal.valueOf(currentWeight)) {
+		if(this.totalExpectedWeight != (currentWeight)) {
+			System.out.println(this.totalExpectedWeight);
+			System.out.println(currentWeight);
+			
 			//If not, the attendant is notified, and the method returns true
 			AttendantIO callAttendant = new AttendantIO();
 			callAttendant.informAttendant("Weight Discrepancy Detected!");
@@ -582,6 +603,10 @@ public class SelfCheckoutMachineLogic{
 		//If they match, method returns false
 		return false;
 	}
+
+	/**
+	 * A method that handle the pay with both debit and credit card, It will pay total amount that is due
+	 */
 	public void payWithCard(){
 		int holdNum;
 		if (attempt > 3){
