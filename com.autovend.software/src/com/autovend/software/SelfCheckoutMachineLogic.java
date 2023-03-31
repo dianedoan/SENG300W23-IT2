@@ -603,6 +603,10 @@ public class SelfCheckoutMachineLogic{
 		//If they match, method returns false
 		return false;
 	}
+
+	/**
+	 * A method that handle the pay with both debit and credit card, It will pay total amount that is due
+	 */
 	public void payWithCard(){
 		int holdNum;
 		if (attempt > 3){
