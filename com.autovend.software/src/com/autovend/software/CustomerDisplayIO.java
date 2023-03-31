@@ -27,31 +27,41 @@ public class CustomerDisplayIO {
 	public String getMostRecentMessage() {
 		return mostRecentMessageToCustomer;
 	}
-	
+
+
+
+
 	/**
 	 * Allows user to enter their membership number
 	 * @return the number entered
-	 * @throws IllegalArgumentException if not a number entered.
-	 */
-	
-	public int getMembershipNumber() throws IllegalArgumentException{
-		try {
-			Scanner customer_input = new Scanner(System.in);
-			System.out.println("Please enter membership number:");
-			String mn = customer_input.nextLine();
-			if(mn.equals("cancel")) {
-				return 0;
-			}else {
+	 * */
+	public int getMembershipNumber() {
+		Scanner customer_input = new Scanner(System.in);
+		System.out.println("Please enter membership number:");
+		String mn = customer_input.nextLine();
+		return parseMembershipNumber(mn);
+	}
+
+
+	/**
+	 * Allows user to enter their membership number
+	 * @return the number entered
+	 * @throws NumberFormatException if number entered was not valid.
+	 * */
+	public int parseMembershipNumber(String mn) {
+		if (mn.equals("cancel")) {
+			return 0;
+		} else {
+			try {
 				int membershipNumber = Integer.parseInt(mn);
 				return membershipNumber;
+			} catch (NumberFormatException e) {
+				throw new IllegalArgumentException("Enter proper membership number.");
 			}
-		}catch(IllegalArgumentException e) {
-			System.out.println("Enter proper membership number.");
 		}
-		return 0;
-		
-
 	}
+
+
 }
 
 		
